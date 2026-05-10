@@ -19,6 +19,11 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         
+    - name: Setup Gradle
+      uses: gradle/wrapper-action@v3
+      with:
+        gradle-version: 8.2
+        
     - name: Setup Android SDK
       uses: android-actions/setup-android@v2
         
