@@ -1,29 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Deep Blue Background -->
-    <color name="background_primary">#0A1929</color>
-    <color name="background_secondary">#0D2137</color>
-    <color name="card_background">#132F4C</color>
+    <!-- Deep Dark Background -->
+    <color name="background_primary">#030508</color>
+    <color name="background_secondary">#0A0F14</color>
+    <color name="background_card">#0E1419</color>
+    <color name="background_surface">#141C22</color>
     
     <!-- Text Colors -->
-    <color name="text_primary">#E3F2FD</color>
-    <color name="text_secondary">#90CAF9</color>
-    <color name="text_tertiary">#5C6BC0</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B3FFFFFF</color>
+    <color name="text_tertiary">#66FFFFFF</color>
+    <color name="text_quaternary">#40FFFFFF</color>
     
-    <!-- BlueMeanie Brand - Electric Blue -->
-    <color name="accent_primary">#2196F3</color>
-    <color name="accent_secondary">#00BCD4</color>
-    <color name="accent_glow">#402196F3</color>
-    <color name="blue_meanie">#1565C0</color>
-    <color name="blue_meanie_light">#42A5F5</color>
+    <!-- Cyan Brand Colors -->
+    <color name="accent_primary">#00E5FF</color>
+    <color name="accent_secondary">#0099FF</color>
+    <color name="accent_glow">#6600E5FF</color>
+    <color name="accent_dim">#1A00E5FF</color>
     
     <!-- Status Colors -->
-    <color name="status_active">#1565C0</color>
-    <color name="status_idle">#FF5252</color>
-    <color name="status_warning">#FFB300</color>
+    <color name="status_danger">#FF2D55</color>
+    <color name="status_success">#30D158</color>
+    <color name="status_warning">#FFD60A</color>
+    <color name="status_gold">#FFD700</color>
+    <color name="status_silver">#C0C0C0</color>
+    <color name="status_bronze">#CD7F32</color>
     
-    <!-- Dividers -->
-    <color name="divider">#1E3A5F</color>
+    <!-- Borders -->
+    <color name="border_dim">#2600E5FF</color>
+    <color name="border_medium">#4000E5FF</color>
     
     <!-- Standard -->
     <color name="black">#000000</color>
