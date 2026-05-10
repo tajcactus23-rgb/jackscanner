@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-JackScanner - BLE Scanner for Android (Termux/Root)
+BlueMeanie - BLE Scanner for Android (Termux/Root)
 Inspired by lookout.py and PoliceDetector
 Scans for Axon devices (OUI: 00:25:DF)
 """
@@ -128,7 +128,7 @@ def main():
     global alert_play
     
     print("=" * 50)
-    print(" JackScanner - BLE Device Scanner")
+    print(" BlueMeanie - BLE Device Scanner")
     print(" Target OUI: 00:25:DF (Axon)")
     print("=" * 50)
     print()

@@ -21,7 +21,7 @@ import com.axonbleeder.ui.MainActivity
 
 class BleScanService : Service() {
 
-    private var bluetoothLeScanner: android.bluetooth.le.BleScanner? = null
+    private var bluetoothLeScanner: android.bluetooth.le.BluetoothLeScanner? = null
     private var scanCallback: android.bluetooth.le.ScanCallback? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var isScanning = false

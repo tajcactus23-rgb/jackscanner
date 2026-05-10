@@ -1,27 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Deep Dark Background -->
-    <color name="background_primary">#0D0D0D</color>
-    <color name="background_secondary">#161616</color>
-    <color name="card_background">#1A1A1A</color>
+    <!-- Deep Blue Background -->
+    <color name="background_primary">#0A1929</color>
+    <color name="background_secondary">#0D2137</color>
+    <color name="card_background">#132F4C</color>
     
     <!-- Text Colors -->
-    <color name="text_primary">#F5F5F5</color>
-    <color name="text_secondary">#8A8A8A</color>
-    <color name="text_tertiary">#4A4A4A</color>
+    <color name="text_primary">#E3F2FD</color>
+    <color name="text_secondary">#90CAF9</color>
+    <color name="text_tertiary">#5C6BC0</color>
     
-    <!-- Accent Colors - Electric Cyan -->
-    <color name="accent_primary">#00FFD1</color>
-    <color name="accent_secondary">#00CCAA</color>
-    <color name="accent_glow">#4000FFD1</color>
+    <!-- BlueMeanie Brand - Electric Blue -->
+    <color name="accent_primary">#2196F3</color>
+    <color name="accent_secondary">#00BCD4</color>
+    <color name="accent_glow">#402196F3</color>
+    <color name="blue_meanie">#1565C0</color>
+    <color name="blue_meanie_light">#42A5F5</color>
     
     <!-- Status Colors -->
-    <color name="status_active">#00FFD1</color>
-    <color name="status_idle">#FF4444</color>
-    <color name="status_warning">#FFAA00</color>
+    <color name="status_active">#1565C0</color>
+    <color name="status_idle">#FF5252</color>
+    <color name="status_warning">#FFB300</color>
     
     <!-- Dividers -->
-    <color name="divider">#2A2A2A</color>
+    <color name="divider">#1E3A5F</color>
     
     <!-- Standard -->
     <color name="black">#000000</color>

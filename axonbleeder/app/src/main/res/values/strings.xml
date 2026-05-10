@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">JackScanner</string>
+    <string name="app_name">BlueMeanie</string>
     <string name="app_tagline">BLE Device Detector</string>
     
     <!-- Status -->
@@ -25,7 +25,7 @@
     <string name="unknown_device">Unknown Device</string>
     
     <!-- Service -->
-    <string name="service_title">JackScanner Active</string>
+    <string name="service_title">BlueMeanie Active</string>
     <string name="service_scanning">Scanning for devices…</string>
     
     <!-- Notifications -->

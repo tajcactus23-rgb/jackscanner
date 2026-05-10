@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AxonBleeder - Police Proximity Detector
+BlueMeanie - Police Proximity Detector
 Inspired by lookout.py and PoliceDetector
 Scans for Axon/Police devices (OUI: 00:25:DF)
 """
@@ -90,7 +90,7 @@ def scan_hcitool():
 
 def main():
     print("=" * 50)
-    print(" AxonBleeder - Police Proximity Detector")
+    print(" BlueMeanie - Police Proximity Detector")
     print(" Target: 00:25:DF (Axon International)")
     print("=" * 50)
     
