@@ -19,13 +19,25 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         
-    - name: Setup Gradle
-      uses: gradle/wrapper-action@v3
-      with:
-        gradle-version: 8.2
+    - name: Install Gradle
+      run: |
+        cd $HOME
+        curl -sL https://services.gradle.org/distributions/gradle-8.2-bin.zip -o gradle.zip
+        unzip -q gradle.zip
+        export PATH=$HOME/gradle-8.2/bin:$PATH
+        gradle --version
         
     - name: Setup Android SDK
       uses: android-actions/setup-android@v2
+        
+    - name: Generate Gradle Wrapper
+      run: |
+        export PATH=$HOME/gradle-8.2/bin:$PATH
+        export ANDROID_HOME=$HOME/android-sdk
+        cd jackscanner
+        gradle wrapper --gradle-version 8.2
+        cd ../axonbleeder
+        gradle wrapper --gradle-version 8.2
         
     - name: Build JackScanner APK
       run: |
@@ -38,7 +50,6 @@ jobs:
     - name: Build AxonBleeder APK
       run: |
         export ANDROID_HOME=$HOME/android-sdk
-        export ANDROID_SDK_ROOT=$ANDROID_HOME
         echo "sdk.dir=$ANDROID_HOME" > axonbleeder/local.properties
         cd axonbleeder
         chmod +x gradlew
