@@ -1,0 +1,9 @@
+{
+  "name": "BlueMeanie Scanner",
+  "version": "1.0.0", 
+  "description": "BLE Scanner for Axon/TASER devices - Web Status",
+  "scripts": {
+    "start": "python3 -m http.server 8080"
+  },
+  "repository": "https://github.com/tajcactus23-rgb/jackscanner"
+}
