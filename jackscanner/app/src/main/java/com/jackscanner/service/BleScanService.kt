@@ -18,6 +18,7 @@ import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import com.jackscanner.R
 import com.jackscanner.ui.MainActivity
+import com.jackscanner.utils.OuiMapper
 
 class BleScanService : Service() {
 
@@ -97,21 +98,23 @@ class BleScanService : Service() {
             override fun onScanResult(callbackType: Int, result: android.bluetooth.le.ScanResult) {
                 val device = result.device
                 val address = device.address ?: return
+                val deviceName = device.name
+                val rssi = result.rssi
                 
-                // Check if this is a target device by OUI
-                if (isTargetDevice(address)) {
+                // Check if this is an Axon device using OUI + name detection
+                if (isTargetDevice(address, deviceName, rssi)) {
                     if (!detectedDevices.contains(address)) {
                         detectedDevices.add(address)
                         detectedCount = detectedDevices.size
                     }
                     
-                    val deviceName = device.name ?: getString(R.string.unknown_device)
-                    val signalStrength = result.rssi
+                    val displayName = deviceName ?: getString(R.string.unknown_device)
+                    val signalStrength = rssi
                     
-                    android.util.Log.i("BleScanService", "Target detected: $address ($deviceName) RSSI: $signalStrength")
+                    android.util.Log.i("BleScanService", "Target detected: $address ($displayName) RSSI: $signalStrength")
                     
                     // Alert!
-                    sendAlertNotification(address, deviceName, signalStrength)
+                    sendAlertNotification(address, displayName, signalStrength)
                     triggerAlert()
                 }
             }
@@ -152,7 +155,21 @@ class BleScanService : Service() {
     }
     
     /**
-     * Check if MAC address matches target OUI (Axon: 00:25:DF)
+     * Check if this is a target Axon device using OUI + name detection
+     * Uses multiple fingerprints: MAC OUI, device name patterns
+     */
+    private fun isTargetDevice(macAddress: String?, deviceName: String?, rssi: Int): Boolean {
+        if (macAddress.isNullOrBlank()) return false
+        
+        // Use OuiMapper for comprehensive detection
+        // Also pass device name for detection
+        val name = if (deviceName.isNullOrBlank()) null else deviceName
+        
+        return OuiMapper.isAxonDevice(macAddress, name, rssi)
+    }
+    
+    /**
+     * Legacy OUI check - kept for reference
      */
     private fun isTargetDevice(macAddress: String?): Boolean {
         if (macAddress.isNullOrBlank()) return false

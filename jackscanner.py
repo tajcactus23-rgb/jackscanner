@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """
-BlueMeanie - BLE Scanner for Android (Termux/Root)
-Inspired by lookout.py and PoliceDetector
-Scans for Axon devices (OUI: 00:25:DF)
+BlueMeanie - BLE Scanner for Axon/TASER Devices
+Scans for Axon devices using multiple detection fingerprints:
+- MAC OUI: 00:25:DF, FC:A9:E8
+- Device name patterns: AXON_CAMERA, TASER, AXON_BODY
+- FCC Grantee: X4G
+
+Inspired by community reports from lookout.py, PoliceDetector
+Reference: FCC ID X4GS01506, X4GS00947
 """
 import asyncio
 import sys
@@ -11,12 +16,47 @@ import subprocess
 import time
 from datetime import datetime
 
-# Target OUI - Axon International
-TARGET_OUI = "00:25:DF"
-TARGET_OUI_LOWER = "00:25:df"
+# Known Axon OUIs from IEEE/FCC
+TARGET_OUIS = [
+    "00:25:DF",  # Primary Axon OUI
+    "FC:A9:E8",  # Additional observed
+    "X4G",      # FCC Grantee prefix
+]
+
+# Known Axon device name patterns
+AXON_PATTERNS = [
+    "AXON",
+    "TASER", 
+    "AXON_CAMERA",
+    "AXON_BODY",
+    "AXON_SIGNAL",
+    "AXON_SIDEARM",
+]
 
 detected = set()
 alert_play = False
+
+def is_axon_device(address, name, rssi):
+    """Check if device is Axon using MAC OUI + name patterns"""
+    if not address:
+        return False
+    
+    addr_upper = address.upper().replace("-", ":").replace("_", ":")
+    prefix = addr_upper[:8].replace(":", "") if len(addr_upper) >= 8 else ""
+    
+    # Check MAC OUI
+    for oui in TARGET_OUIS:
+        if prefix.startswith(oui.replace(":", "")):
+            return True
+    
+    # Check device name patterns
+    if name:
+        name_upper = name.upper()
+        for pattern in AXON_PATTERNS:
+            if pattern in name_upper:
+                return True
+    
+    return False
 
 def log_detection(address, name, rssi):
     """Log device detection"""
@@ -83,7 +123,7 @@ async def scan_bleak():
             addr_upper = address.upper().replace("-", ":")
             oui = addr_upper[:8] if len(addr_upper) >= 8 else addr_upper
             
-            if oui in (TARGET_OUI, TARGET_OUI_LOWER):
+            if is_axon_device(address, name, rssi):
                 name = device.name or "Unknown"
                 rssi = device.rssi
                 
@@ -103,22 +143,40 @@ def scan_hcitool():
     
     while True:
         try:
-            result = subprocess.run(
+            # Start BLE scan
+            scan_proc = subprocess.Popen(
                 ["hcitool", "-i", "hci0", "lescan", "--duplicates"],
-                capture_output=True, text=True, timeout=10
+                stdout=subprocess.DEVNULL, 
+                stderr=subprocess.DEVNULL
             )
             
-            lines = result.stdout.split("\n")
-            for line in lines:
-                if TARGET_OUI_LOWER in line.lower() or TARGET_OUI in line.upper():
-                    parts = line.split()
-                    if len(parts) >= 2:
-                        address = parts[0]
-                        name = parts[1] if len(parts) > 1 else "Unknown"
-                        
-                        if address not in detected:
-                            detected.add(address)
-                            log_detection(address, name, 0)
+            time.sleep(10)  # Scan duration
+            
+            # Stop scan
+            scan_proc.terminate()
+            scan_proc.wait()
+            
+            # Try to parse from btmon
+            try:
+                result = subprocess.run(
+                    ["timeout", "3", "btmon", "--raw"],
+                    capture_output=True, text=True
+                )
+                # Parse btmon output for Axon devices
+                for line in result.stdout.split('\n'):
+                    # Simple parsing - look for Axon OUI in MAC
+                    if '00:25:DF' in line.upper() or 'FC:A9:E8' in line.upper():
+                        # Extract address
+                        parts = line.split()
+                        for p in parts:
+                            if len(p.replace(':', '')) == 12:  # MAC
+                                addr = p.upper()
+                                if addr not in detected:
+                                    detected.add(addr)
+                                    log_detection(addr, "Unknown (hcitool)", 0)
+            except:
+                pass
+                
         except Exception as e:
             print(f"Error: {e}")
         
