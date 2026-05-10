@@ -13,6 +13,7 @@
     <!-- Buttons -->
     <string name="start_scan">START SCAN</string>
     <string name="stop_scan">STOP</string>
+    <string name="stop">STOP</string>
     <string name="settings">SETTINGS</string>
     
     <!-- Target -->
