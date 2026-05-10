@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlueMeanie Scanner</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0A1929;
+            color: #00FF41;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 {
+            text-align: center;
+            color: #1976D2;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #64B5F6;
+            margin-bottom: 30px;
+        }
+        .status-card {
+            background: #0D2137;
+            border: 2px solid #1976D2;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #FF0000;
+            margin-right: 10px;
+            animation: pulse 1s infinite;
+        }
+        .status-indicator.active { background: #00FF41; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .btn {
+            background: #1976D2;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100%;
+            text-transform: uppercase;
+        }
+        .btn:hover { background: #1565C0; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: #0D2137;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #1976D2;
+        }
+        .stat-value { font-size: 2em; color: #64B5F6; }
+        .stat-label { color: #888; font-size: 0.8em; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #333; }
+        th { color: #1976D2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>BlueMeanie</h1>
+        <p class="subtitle">Axon/TASER BLE Scanner</p>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-value" id="deviceCount">0</div>
+                <div class="stat-label">DEVICES</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="scanTime">00:00</div>
+                <div class="stat-label">SCAN TIME</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="status">IDLE</div>
+                <div class="stat-label">STATUS</div>
+            </div>
+        </div>
+        
+        <div class="status-card">
+            <h3><span class="status-indicator" id="indicator"></span>Scanner Status</h3>
+            <p style="margin-top: 10px;">
+                Target OUIs: <strong>00:25:DF, FC:A9:E8, X4G</strong><br>
+                Target Names: <strong>AXON_CAMERA, TASER, AXON_BODY</strong>
+            </p>
+        </div>
+        
+        <button class="btn" onclick="toggleScanner()">
+            Start Scanner
+        </button>
+        
+        <h3 style="margin: 30px 0 15px; color: #FF0000;">DETECTED DEVICES</h3>
+        <table id="detectionTable">
+            <thead>
+                <tr>
+                    <th>MAC Address</th>
+                    <th>Name</th>
+                    <th>Signal</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody id="detectionList">
+                <tr><td colspan="4" style="text-align:center;color:#666;">No devices detected</td></tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <script>
+        let scanning = false;
+        let startTime = null;
+        let devices = [];
+        
+        function toggleScanner() {
+            scanning = !scanning;
+            const btn = document.querySelector('.btn');
+            const indicator = document.getElementById('indicator');
+            const status = document.getElementById('status');
+            
+            if (scanning) {
+                btn.textContent = 'Stop Scanner';
+                btn.style.background = '#FF0000';
+                indicator.classList.add('active');
+                status.textContent = 'SCANNING';
+                startTime = Date.now();
+                updateTimer();
+            } else {
+                btn.textContent = 'Start Scanner';
+                btn.style.background = '#1976D2';
+                indicator.classList.remove('active');
+                status.textContent = 'IDLE';
+            }
+        }
+        
+        function updateTimer() {
+            if (!scanning || !startTime) return;
+            
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const secs = (elapsed % 60).toString().padStart(2, '0');
+            document.getElementById('scanTime').textContent = mins + ':' + secs;
+            
+            setTimeout(updateTimer, 1000);
+        }
+    </script>
+</body>
+</html>
