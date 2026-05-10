@@ -7,18 +7,21 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-14
     
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       
-    - name: Setup Xcode
-      uses: microsoft/setup-xcode@v1
-      
-    - name: Setup iOS SDK
+    - name: Show Xcode
+      run: |
+        xcode-select --print-path
+        xcodebuild -version
+        
+    - name: Setup iOS Simulator
       run: |
         xcodebuild -showsdks
+        xcodebuild -runinstruments -tIDLE -dylibIDList 2>&1 || true
         
     - name: Build JackScanner
       run: |
