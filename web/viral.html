@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlueMeanie - Axon Radar</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-dark: #030812;
+            --primary: #00F0FF;
+            --alert: #FF0040;
+            --success: #00FF88;
+            --warn: #FFB800;
+        }
+        
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: var(--bg-dark);
+            color: var(--primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Radar Animation */
+        .radar-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 20px auto;
+        }
+        
+        .radar {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 30px var(--primary), inset 0 0 30px rgba(0,240,255,0.1);
+            animation: pulse 2s infinite;
+        }
+        
+        .radar::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+            transform-origin: left center;
+            animation: scan 3s linear infinite;
+        }
+        
+        .radar::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px var(--primary);
+        }
+        
+        .radar-ring {
+            position: absolute;
+            border: 1px solid rgba(0,240,255,0.3);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .ring-1 { width: 100px; height: 100px; }
+        .ring-2 { width: 200px; height: 200px; }
+        .ring-3 { width: 280px; height: 280px; }
+        
+        @keyframes scan {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 30px var(--primary), inset 0 0 30px rgba(0,240,255,0.1); }
+            50% { box-shadow: 0 0 50px var(--primary), inset 0 0 50px rgba(0,240,255,0.2); }
+        }
+        
+        /* Detection Blip */
+        .blip {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: var(--alert);
+            border-radius: 50%;
+            box-shadow: 0 0 30px var(--alert);
+            animation: blip-alert 0.5s infinite;
+            display: none;
+        }
+        
+        @keyframes blip-alert {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(180deg, rgba(0,240,255,0.1) 0%, transparent 100%);
+        }
+        
+        .logo {
+            font-size: 2.5em;
+            font-weight: 900;
+            letter-spacing: 10px;
+            text-shadow: 0 0 30px var(--primary);
+            animation: glitch 2s infinite;
+        }
+        
+        @keyframes glitch {
+            0%, 90%, 100% { text-shadow: 0 0 30px var(--primary); }
+            92% { text-shadow: -3px 0 var(--alert); }
+            94% { text-shadow: 3px 0 var(--primary); }
+        }
+        
+        .tagline {
+            font-family: 'Share Tech Mono', monospace;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.9em;
+        }
+        
+        /* Stats Dashboard */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .stat-card {
+            background: rgba(0,240,255,0.05);
+            border: 1px solid rgba(0,240,255,0.3);
+            padding: 15px 10px;
+            text-align: center;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.65em;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 2px;
+        }
+        
+        .stat-card.alert .stat-value {
+            color: var(--alert);
+            text-shadow: 0 0 10px var(--alert);
+            animation: flash 0.5s infinite;
+        }
+        
+        @keyframes flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Target Display */
+        .target-section {
+            padding: 20px;
+        }
+        
+        .target-card {
+            background: rgba(255,0,64,0.1);
+            border: 2px solid var(--alert);
+            padding: 20px;
+            margin-bottom: 15px;
+            display: none;
+            animation: target-found 0.3s;
+        }
+        
+        .target-card.active { display: block; }
+        
+        @keyframes target-found {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .target-icon {
+            font-size: 3em;
+            animation: shake 0.5s infinite;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-5deg); }
+            75% { transform: translateX(5px) rotate(5deg); }
+        }
+        
+        .target-mac {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.3em;
+            color: var(--alert);
+            word-break: break-all;
+        }
+        
+        .target-name {
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+        
+        .target-rssi {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--warn);
+        }
+        
+        .target-time {
+            font-family: 'Share Tech Mono', monospace;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.8em;
+        }
+        
+        /* Controls */
+        .controls {
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .btn {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 15px 40px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        
+        .btn:hover {
+            background: var(--primary);
+            color: var(--bg-dark);
+            box-shadow: 0 0 30px var(--primary);
+        }
+        
+        .btn-scanning {
+            background: var(--alert);
+            border-color: var(--alert);
+            color: white;
+            animation: btn-pulse 1s infinite;
+        }
+        
+        @keyframes btn-pulse {
+            0%, 100% { box-shadow: 0 0 20px var(--alert); }
+            50% { box-shadow: 0 0 40px var(--alert); }
+        }
+        
+        /* Share Section */
+        .share-section {
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .share-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #1DA1F2 0%, #0D8BD9 100%);
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            font-weight: 700;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            margin: 5px;
+        }
+        
+        .share-btn.reddit {
+            background: linear-gradient(135deg, #FF4500 0%, #FF5700 100%);
+        }
+        
+        /* Device List */
+        .device-list {
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .device-item {
+            background: rgba(0,240,255,0.05);
+            border-left: 3px solid var(--alert);
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .device-item .mac {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85em;
+        }
+        
+        .device-item .name {
+            color: var(--primary);
+            font-weight: 700;
+        }
+        
+        .device-item .rssi {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--warn);
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255,255,255,0.3);
+        }
+        
+        .empty-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        
+        /* Counter Badge */
+        .counter-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--alert);
+            color: white;
+            padding: 10px 20px;
+            font-weight: 900;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            display: none;
+            z-index: 100;
+        }
+        
+        .counter-badge.active { display: block; }
+        
+        /* Audio Toggle */
+        .audio-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,240,255,0.2);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* OUI Info */
+        .oui-info {
+            text-align: center;
+            padding: 20px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75em;
+            color: rgba(255,255,255,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">BLUEMEANIE</div>
+        <div class="tagline">AXON DETECTION SYSTEM v1.0</div>
+    </div>
+    
+    <div class="radar-container">
+        <div class="radar"></div>
+        <div class="radar-ring ring-1"></div>
+        <div class="radar-ring ring-2"></div>
+        <div class="radar-ring ring-3"></div>
+        <div class="blip" id="blip"></div>
+    </div>
+    
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-value" id="deviceCount">0</div>
+            <div class="stat-label">CAUGHT</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="scanTime">00:00</div>
+            <div class="stat-label">SCAN TIME</div>
+        </div>
+        <div class="stat-card" id="signalCard">
+            <div class="stat-value" id="signal">---</div>
+            <div class="stat-label">SIGNAL</div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <button class="btn" id="scanBtn" onclick="toggleScanner()">
+            START SCAN
+        </button>
+    </div>
+    
+    <div class="target-section" id="targetSection">
+        <div class="target-card" id="targetCard">
+            <div class="target-icon">⚠️</div>
+            <div class="target-name" id="targetName">AXON_CAMERA</div>
+            <div class="target-mac" id="targetMac">00:25:DF:XX:XX:XX</div>
+            <div class="target-rssi" id="targetRssi">Signal: -65 dBm</div>
+            <div class="target-time" id="targetTime">Detected: 00:00:00</div>
+        </div>
+    </div>
+    
+    <div class="device-list" id="deviceList">
+        <div class="empty-state" id="emptyState">
+            <div class="empty-icon">📡</div>
+            <div>No targets detected yet</div>
+            <div style="font-size: 0.8em; margin-top: 5px;">Scanning for Axon/TASER devices...</div>
+        </div>
+    </div>
+    
+    <div class="share-section" id="shareSection" style="display: none;">
+        <a class="share-btn" id="shareTwitter" href="#" onclick="shareTwitter()">🐦 Tweet</a>
+        <a class="share-btn reddit" id="shareReddit" href="#" onclick="shareReddit()">🤖 Reddit</a>
+    </div>
+    
+    <div class="oui-info">
+        TARGETS: 00:25:DF • FC:A9:E8 • X4G<br>
+        NAMES: AXON_CAMERA • TASER • AXON_BODY • AXON_SIGNAL
+    </div>
+    
+    <script>
+        let scanning = false;
+        let startTime = null;
+        let devices = [];
+        let audioEnabled = true;
+        let alertPlayed = false;
+        
+        // Audio context for alerts
+        let audioCtx;
+        
+        function playAlert() {
+            if (!audioEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.frequency.value = 880;
+                osc.type = 'square';
+                
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+                
+                // Second tone
+                setTimeout(() => {
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc2.frequency.value = 1320;
+                    osc2.type = 'square';
+                    gain2.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                    osc2.start();
+                    osc2.stop(audioCtx.currentTime + 0.5);
+                }, 300);
+            } catch(e) {}
+        }
+        
+        function toggleScanner() {
+            scanning = !scanning;
+            const btn = document.getElementById('scanBtn');
+            
+            if (scanning) {
+                btn.textContent = 'STOP SCAN';
+                btn.classList.add('btn-scanning');
+                startTime = Date.now();
+                updateTimer();
+                
+                // Show empty state
+                document.getElementById('emptyState').style.display = 'block';
+            } else {
+                btn.textContent = 'START SCAN';
+                btn.classList.remove('btn-scanning');
+            }
+        }
+        
+        function updateTimer() {
+            if (!scanning || !startTime) return;
+            
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const secs = (elapsed % 60).toString().padStart(2, '0');
+            document.getElementById('scanTime').textContent = mins + ':' + secs;
+            
+            setTimeout(updateTimer, 1000);
+        }
+        
+        // Simulated detection for demo
+        function simulateDetection() {
+            if (!scanning) return;
+            
+            const demoDevices = [
+                { mac: '00:25:DF:A1:B2:C3', name: 'AXON_CAMERA', rssi: -65 },
+                { mac: 'FC:A9:E8:12:34:56', name: 'TASER_7', rssi: -72 },
+                { mac: 'X4G:S01506', name: 'AXON_BODY', rssi: -80 },
+            ];
+            
+            const device = demoDevices[Math.floor(Math.random() * demoDevices.length)];
+            addDevice(device);
+        }
+        
+        function addDevice(device) {
+            if (devices.find(d => d.mac === device.mac)) return;
+            
+            devices.push(device);
+            
+            // Play alert sound
+            playAlert();
+            
+            // Update counter
+            document.getElementById('deviceCount').textContent = devices.length;
+            
+            // Show target card
+            const targetCard = document.getElementById('targetCard');
+            document.getElementById('targetName').textContent = device.name;
+            document.getElementById('targetMac').textContent = device.mac;
+            document.getElementById('targetRssi').textContent = 'Signal: ' + device.rssi + ' dBm';
+            document.getElementById('targetTime').textContent = 'Detected: ' + new Date().toLocaleTimeString();
+            targetCard.classList.add('active');
+            
+            // Update signal display
+            document.getElementById('signal').textContent = device.rssi;
+            document.getElementById('signalCard').classList.add('alert');
+            
+            // Hide empty state
+            document.getElementById('emptyState').style.display = 'none';
+            
+            // Show share buttons
+            document.getElementById('shareSection').style.display = 'block';
+            
+            // Update share links
+            const msg = 'I just caught a ' + device.name + ' device! Signal: ' + device.rssi + ' dBm';
+            document.getElementById('shareTwitter').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(msg + ' #BlueMeanie');
+            document.getElementById('shareReddit').href = 'https://reddit.com/submit?url=https://github.com/tajcactus23-rgb/jackscanner&title=' + encodeURIComponent(msg);
+        }
+        
+        // Demo: trigger detection every 30 seconds
+        setInterval(simulateDetection, 30000);
+    </script>
+</body>
+</html>
