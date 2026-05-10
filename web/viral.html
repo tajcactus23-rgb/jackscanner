@@ -10,11 +10,14 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         :root {
-            --bg-dark: #030812;
-            --primary: #00F0FF;
-            --alert: #FF0040;
-            --success: #00FF88;
-            --warn: #FFB800;
+            --bg-dark: #0a0a0a;
+            --primary: #00ffff;
+            --accent: #0066ff;
+            --alert: #ff0040;
+            --success: #00ff88;
+            --warn: #ffB800;
+            --text: #ffffff;
+            --text-dim: rgba(255,255,255,0.6);
         }
         
         body {
@@ -39,7 +42,7 @@
             height: 100%;
             border: 3px solid var(--primary);
             border-radius: 50%;
-            box-shadow: 0 0 30px var(--primary), inset 0 0 30px rgba(0,240,255,0.1);
+            box-shadow: 0 0 30px var(--primary), 0 0 60px var(--accent), inset 0 0 30px rgba(0,255,255,0.1);
             animation: pulse 2s infinite;
         }
         
@@ -337,6 +340,52 @@
             margin-bottom: 10px;
         }
         
+        /* STREAK COUNTER - viral feature */
+        .streak-section {
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .streak-card {
+            background: linear-gradient(135deg, #ff6b00 0%, #ff0040 100%);
+            padding: 20px;
+            margin: 10px auto;
+            max-width: 200px;
+            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+        }
+        
+        .streak-label {
+            font-size: 0.7em;
+        }
+        
+        .streak-value {
+            font-size: 3em;
+            font-weight: 900;
+        }
+        
+        /* ACHIEVEMENTS - viral feature */
+        .achievements {
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: rgba(0,255,255,0.1);
+            border: 1px solid var(--primary);
+            padding: 8px 15px;
+            margin: 3px;
+            font-size: 0.7em;
+            opacity: 0.3;
+        }
+        
+        .badge.unlocked {
+            opacity: 1;
+            background: var(--primary);
+            color: var(--bg-dark);
+            font-weight: 700;
+        }
+        
         /* Counter Badge */
         .counter-badge {
             position: fixed;
@@ -444,12 +493,51 @@
         NAMES: AXON_CAMERA • TASER • AXON_BODY • AXON_SIGNAL
     </div>
     
+    <!-- STREAK COUNTER -->
+    <div class="streak-section">
+        <div class="streak-card">
+            <div class="streak-label">🔥 DETECTION STREAK</div>
+            <div class="streak-value" id="streakCount">0</div>
+            <div class="streak-label">days</div>
+        </div>
+    </div>
+    
+    <!-- ACHIEVEMENTS -->
+    <div class="achievements">
+        <div class="badge" id="badge-first">🎯 FIRST</div>
+        <div class="badge" id="badge-streak-3">🔥 3-DAY</div>
+        <div class="badge" id="badge-streak-7">⚡ 7-DAY</div>
+        <div class="badge" id="badge-total-10">📡 10+</div>
+    </div>
+    
     <script>
         let scanning = false;
         let startTime = null;
         let devices = [];
         let audioEnabled = true;
         let alertPlayed = false;
+        
+        // Streak & achievements
+        let streak = parseInt(localStorage.getItem('blueMeanieStreak') || '0');
+        let totalDetections = parseInt(localStorage.getItem('blueMeanieTotal') || '0');
+        let achievements = JSON.parse(localStorage.getItem('blueMeanieBadges') || '[]');
+        let lastDetectDate = localStorage.getItem('blueMeanieLastDate');
+        
+        // Initialize
+        document.getElementById('streakCount').textContent = streak;
+        
+        // Check streak on load
+        function checkStreak() {
+            const today = new Date().toDateString();
+            if (lastDetectDate) {
+                const last = new Date(lastDetectDate);
+                const diff = (new Date() - last) / (1000 * 60 * 60 * 24);
+                if (diff > 1) streak = 0;
+            }
+            localStorage.setItem('blueMeanieStreak', streak);
+            document.getElementById('streakCount').textContent = streak;
+        }
+        checkStreak();
         
         // Audio context for alerts
         let audioCtx;
@@ -540,6 +628,40 @@
             
             // Play alert sound
             playAlert();
+            
+            // === UPDATE STREAK ===
+            const today = new Date().toDateString();
+            if (lastDetectDate !== today) {
+                streak++;
+                lastDetectDate = today;
+                localStorage.setItem('blueMeanieStreak', streak);
+                localStorage.setItem('blueMeanieLastDate', today);
+                document.getElementById('streakCount').textContent = streak;
+            }
+            
+            // === UPDATE TOTAL ===
+            totalDetections++;
+            localStorage.setItem('blueMeanieTotal', totalDetections);
+            
+            // === UNLOCK ACHIEVEMENTS ===
+            const badges = [];
+            if (totalDetections >= 1) {
+                badges.push('first');
+                document.getElementById('badge-first').classList.add('unlocked');
+            }
+            if (streak >= 3) {
+                badges.push('streak-3');
+                document.getElementById('badge-streak-3').classList.add('unlocked');
+            }
+            if (streak >= 7) {
+                badges.push('streak-7');
+                document.getElementById('badge-streak-7').classList.add('unlocked');
+            }
+            if (totalDetections >= 10) {
+                badges.push('total-10');
+                document.getElementById('badge-total-10').classList.add('unlocked');
+            }
+            localStorage.setItem('blueMeanieBadges', JSON.stringify(badges));
             
             // Update counter
             document.getElementById('deviceCount').textContent = devices.length;
