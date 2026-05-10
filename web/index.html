@@ -3,165 +3,723 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BlueMeanie Scanner</title>
+    <title>BlueMeanie - Axon Radar</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-dark: #0a0a0a;
+            --primary: #00ffff;
+            --accent: #0066ff;
+            --alert: #ff0040;
+            --success: #00ff88;
+            --warn: #ffb800;
+            --text: #ffffff;
+            --card-bg: rgba(0,255,255,0.05);
+        }
+        
         body {
-            font-family: 'Courier New', monospace;
-            background: #0A1929;
-            color: #00FF41;
+            font-family: 'Orbitron', sans-serif;
+            background: var(--bg-dark);
+            color: var(--primary);
             min-height: 100vh;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            padding: 10px;
+            background: rgba(0,0,0,0.5);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 700;
+            font-size: 0.9em;
+        }
+        
+        .tab.active {
+            border-color: var(--primary);
+            background: var(--card-bg);
+        }
+        
+        /* Pages */
+        .page {
+            display: none;
             padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
         }
-        .container { max-width: 800px; margin: 0 auto; }
-        h1 {
+        
+        .page.active { display: block; }
+        
+        /* Cards */
+        .auth-card {
+            background: var(--card-bg);
+            border: 2px solid var(--primary);
+            padding: 30px;
+            margin: 20px 0;
             text-align: center;
-            color: #1976D2;
-            font-size: 2.5em;
+        }
+        
+        .auth-logo {
+            font-size: 2em;
+            font-weight: 900;
+            color: var(--primary);
             margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 5px;
         }
-        .subtitle {
-            text-align: center;
-            color: #64B5F6;
+        
+        .auth-subtitle {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.8em;
             margin-bottom: 30px;
         }
-        .status-card {
-            background: #0D2137;
-            border: 2px solid #1976D2;
-            border-radius: 10px;
-            padding: 20px;
+        
+        .form-group {
             margin-bottom: 20px;
+            text-align: left;
         }
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #FF0000;
-            margin-right: 10px;
-            animation: pulse 1s infinite;
+        
+        .form-label {
+            display: block;
+            font-size: 0.75em;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 8px;
         }
-        .status-indicator.active { background: #00FF41; }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        .btn {
-            background: #1976D2;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.2em;
-            cursor: pointer;
-            border-radius: 5px;
+        
+        .form-input {
             width: 100%;
-            text-transform: uppercase;
+            padding: 15px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(0,255,255,0.3);
+            color: var(--text);
+            font-family: 'Share Tech Mono', monospace;
         }
-        .btn:hover { background: #1565C0; }
-        .stats {
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0,255,255,0.3);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            border: none;
+            color: var(--bg-dark);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .btn:hover {
+            box-shadow: 0 0 30px var(--primary);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            margin-top: 10px;
+        }
+        
+        .hwid-display {
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            font-family: 'Share Tech Mono', monospace;
+            word-break: break-all;
+            font-size: 0.75em;
+            color: var(--warn);
+            border: 1px dashed var(--warn);
+            margin-top: 10px;
+        }
+        
+        /* Radar */
+        .radar-container {
+            width: 250px;
+            height: 250px;
+            margin: 20px auto;
+        }
+        
+        .radar {
+            width: 100%;
+            height: 100%;
+            border: 3px solid var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 30px var(--primary), 0 0 60px var(--accent);
+            position: relative;
+            animation: pulse 2s infinite;
+        }
+        
+        .radar::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+            transform-origin: left center;
+            animation: scan 3s linear infinite;
+        }
+        
+        .radar::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        @keyframes scan { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 30px var(--primary), 0 0 60px var(--accent); } 50% { box-shadow: 0 0 50px var(--primary), 0 0 80px var(--accent); } }
+        
+        /* Stats */
+        .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin: 20px 0;
         }
+        
         .stat-box {
-            background: #0D2137;
-            padding: 20px;
+            background: var(--card-bg);
+            padding: 15px;
             text-align: center;
-            border: 1px solid #1976D2;
+            border: 1px solid rgba(0,255,255,0.3);
         }
-        .stat-value { font-size: 2em; color: #64B5F6; }
-        .stat-label { color: #888; font-size: 0.8em; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #333; }
-        th { color: #1976D2; }
+        
+        .stat-value { font-size: 1.5em; font-weight: 700; }
+        .stat-label { font-size: 0.6em; color: rgba(255,255,255,0.5); }
+        
+        .stat-box.alert .stat-value { color: var(--alert); animation: flash 0.5s infinite; }
+        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .scan-btn {
+            width: 100%;
+            padding: 20px;
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1.2em;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        
+        .scan-btn.scanning { background: var(--alert); border-color: var(--alert); color: white; animation: btn-pulse 1s infinite; }
+        @keyframes btn-pulse { 0%, 100% { box-shadow: 0 0 20px var(--alert); } 50% { box-shadow: 0 0 40px var(--alert); } }
+        
+        /* Target */
+        .target-alert {
+            background: rgba(255,0,64,0.1);
+            border: 2px solid var(--alert);
+            padding: 20px;
+            margin: 20px 0;
+            display: none;
+            animation: alert-anim 0.5s;
+        }
+        
+        .target-alert.active { display: block; }
+        @keyframes alert-anim { 0% { transform: scale(0.8); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        
+        .target-icon { font-size: 3em; }
+        .target-name { font-size: 1.5em; font-weight: 700; color: var(--alert); }
+        .target-mac { font-family: 'Share Tech Mono', monospace; color: var(--warn); }
+        
+        /* Leaderboard */
+        .leaderboard { background: var(--card-bg); border: 1px solid rgba(0,255,255,0.3); }
+        .leader-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .leader-rank { width: 40px; font-weight: 700; font-size: 1.2em; }
+        .leader-rank.gold { color: #ffd700; }
+        .leader-rank.silver { color: #c0c0c0; }
+        .leader-rank.bronze { color: #cd7f32; }
+        .leader-info { flex: 1; }
+        .leader-name { font-weight: 700; }
+        .leader-stats { font-size: 0.75em; color: rgba(255,255,255,0.5); }
+        .leader-score { font-weight: 700; color: var(--primary); }
+        
+        /* Chat */
+        .chat-container { height: 60vh; display: flex; flex-direction: column; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.3); }
+        .chat-message { margin-bottom: 15px; padding: 10px; background: var(--card-bg); border-left: 3px solid var(--primary); }
+        .chat-message.own { border-color: var(--success); background: rgba(0,255,136,0.1); }
+        .chat-user { font-weight: 700; font-size: 0.8em; color: var(--warn); }
+        .chat-text { font-size: 0.9em; }
+        .chat-time { font-size: 0.6em; color: rgba(255,255,255,0.3); }
+        .chat-input-area { display: flex; padding: 10px; background: rgba(0,0,0,0.5); }
+        .chat-input { flex: 1; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0,255,255,0.3); color: var(--text); }
+        .chat-send { padding: 12px 20px; background: var(--primary); border: none; color: var(--bg-dark); font-weight: 700; cursor: pointer; margin-left: 10px; }
+        
+        /* User Bar */
+        .user-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: rgba(0,0,0,0.5); font-size: 0.8em; }
+        .user-info { color: var(--warn); }
+        .logout-btn { background: transparent; border: 1px solid var(--alert); color: var(--alert); padding: 5px 15px; cursor: pointer; font-size: 0.8em; }
+        
+        /* Profile */
+        .profile-card { background: var(--card-bg); border: 2px solid var(--primary); padding: 20px; margin: 20px 0; text-align: center; }
+        .profile-rank { font-size: 3em; font-weight: 900; color: var(--primary); }
+        .profile-stat { display: inline-block; margin: 10px 20px; }
+        .profile-stat-value { font-size: 1.5em; font-weight: 700; color: var(--warn); }
+        .profile-stat-label { font-size: 0.7em; color: rgba(255,255,255,0.5); }
+        
+        /* Messages */
+        .message { padding: 15px; margin: 10px 0; text-align: center; font-size: 0.9em; }
+        .message.error { background: rgba(255,0,64,0.2); border: 1px solid var(--alert); color: var(--alert); }
+        .loading { text-align: center; padding: 40px; color: rgba(255,255,255,0.5); }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>BlueMeanie</h1>
-        <p class="subtitle">Axon/TASER BLE Scanner</p>
+    <div class="tabs">
+        <div class="tab active" data-page="radar">RADAR</div>
+        <div class="tab" data-page="leaderboard">LEADERBOARD</div>
+        <div class="tab" data-page="chat">CHAT</div>
+        <div class="tab" data-page="profile">PROFILE</div>
+    </div>
+    
+    <div id="userBar" class="user-bar" style="display: none;">
+        <span class="user-info" id="userDisplay"></span>
+        <button class="logout-btn" onclick="logout()">LOGOUT</button>
+    </div>
+    
+    <!-- RADAR -->
+    <div class="page active" id="page-radar">
+        <div class="radar-container"><div class="radar"></div></div>
         
-        <div class="stats">
-            <div class="stat-box">
-                <div class="stat-value" id="deviceCount">0</div>
-                <div class="stat-label">DEVICES</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-value" id="scanTime">00:00</div>
-                <div class="stat-label">SCAN TIME</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-value" id="status">IDLE</div>
-                <div class="stat-label">STATUS</div>
-            </div>
+        <div class="stats-grid">
+            <div class="stat-box"><div class="stat-value" id="deviceCount">0</div><div class="stat-label">CAUGHT</div></div>
+            <div class="stat-box"><div class="stat-value" id="scanTime">00:00</div><div class="stat-label">TIME</div></div>
+            <div class="stat-box" id="signalBox"><div class="stat-value" id="signal">---</div><div class="stat-label">DBM</div></div>
         </div>
         
-        <div class="status-card">
-            <h3><span class="status-indicator" id="indicator"></span>Scanner Status</h3>
-            <p style="margin-top: 10px;">
-                Target OUIs: <strong>00:25:DF, FC:A9:E8, X4G</strong><br>
-                Target Names: <strong>AXON_CAMERA, TASER, AXON_BODY</strong>
-            </p>
+        <button class="scan-btn" id="scanBtn" onclick="toggleScan()">START SCAN</button>
+        
+        <div class="target-alert" id="targetAlert">
+            <div class="target-icon">⚠️</div>
+            <div class="target-name" id="targetName">AXON_CAMERA</div>
+            <div class="target-mac" id="targetMac">00:25:DF:XX:XX:XX</div>
+            <div>Signal: <span id="targetRssi">-65</span> dBm</div>
+            <div style="font-size: 0.7em; color: rgba(255,255,255,0.5); margin-top: 10px;"><span id="targetTime">--:--:--</span></div>
+        </div>
+    </div>
+    
+    <!-- LEADERBOARD -->
+    <div class="page" id="page-leaderboard">
+        <h3 style="text-align: center; margin-bottom: 20px;">🏆 TOP DETECTORS</h3>
+        <div class="leaderboard" id="leaderboardList"><div class="loading">Loading...</div></div>
+    </div>
+    
+    <!-- CHAT -->
+    <div class="page" id="page-chat">
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages"><div class="loading">Loading chat...</div></div>
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type a message...">
+                <button class="chat-send" onclick="sendMessage()">SEND</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- PROFILE -->
+    <div class="page" id="page-profile">
+        <div class="auth-card" id="authRequired">
+            <div class="auth-logo">🔐</div>
+            <div class="auth-subtitle">Sign in to track your stats</div>
+            <button class="btn" onclick="showLogin()">SIGN IN</button>
+            <button class="btn btn-secondary" onclick="showSignup()">CREATE ACCOUNT</button>
         </div>
         
-        <button class="btn" onclick="toggleScanner()">
-            Start Scanner
-        </button>
-        
-        <h3 style="margin: 30px 0 15px; color: #FF0000;">DETECTED DEVICES</h3>
-        <table id="detectionTable">
-            <thead>
-                <tr>
-                    <th>MAC Address</th>
-                    <th>Name</th>
-                    <th>Signal</th>
-                    <th>Time</th>
-                </tr>
-            </thead>
-            <tbody id="detectionList">
-                <tr><td colspan="4" style="text-align:center;color:#666;">No devices detected</td></tr>
-            </tbody>
-        </table>
+        <div class="profile-card" id="profileCard" style="display: none;">
+            <div class="profile-rank" id="profileRank">#1</div>
+            <div style="font-size: 1.2em; margin-bottom: 20px;" id="profileName">User</div>
+            
+            <div class="profile-stat">
+                <div class="profile-stat-value" id="profileTotal">0</div><div class="profile-stat-label">TOTAL</div>
+            </div>
+            <div class="profile-stat">
+                <div class="profile-stat-value" id="profileStreak">0</div><div class="profile-stat-label">STREAK</div>
+            </div>
+            <div class="profile-stat">
+                <div class="profile-stat-value" id="profileScore">0</div><div class="profile-stat-label">SCORE</div>
+            </div>
+            
+            <div style="margin-top: 30px; text-align: left;">
+                <div class="form-label">YOUR DEVICE KEY</div>
+                <div class="hwid-display" id="deviceKey">Generating...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- LOGIN MODAL -->
+    <div id="loginModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; overflow-y: auto;">
+        <div style="padding: 20px; max-width: 400px; margin: 50px auto;">
+            <div class="auth-card">
+                <div class="auth-logo">🔐 SIGN IN</div>
+                <div id="loginError" class="message error" style="display: none;"></div>
+                
+                <div class="form-group">
+                    <div class="form-label">EMAIL</div>
+                    <input type="email" class="form-input" id="loginEmail" placeholder="email@example.com">
+                </div>
+                <div class="form-group">
+                    <div class="form-label">ACCESS KEY</div>
+                    <input type="text" class="form-input" id="loginKey" placeholder="XXXX-XXXX-XXXX">
+                </div>
+                
+                <button class="btn" onclick="login()">SIGN IN</button>
+                <button class="btn btn-secondary" onclick="closeModal()">CANCEL</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- SIGNUP MODAL -->
+    <div id="signupModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; overflow-y: auto;">
+        <div style="padding: 20px; max-width: 400px; margin: 50px auto;">
+            <div class="auth-card">
+                <div class="auth-logo">📝 CREATE ACCOUNT</div>
+                <div id="signupError" class="message error" style="display: none;"></div>
+                
+                <div class="form-group">
+                    <div class="form-label">USERNAME</div>
+                    <input type="text" class="form-input" id="signupName" placeholder="CallSign">
+                </div>
+                <div class="form-group">
+                    <div class="form-label">EMAIL</div>
+                    <input type="email" class="form-input" id="signupEmail" placeholder="email@example.com">
+                </div>
+                <div class="form-group">
+                    <div class="form-label">ACCESS KEY</div>
+                    <input type="text" class="form-input" id="signupKey" placeholder="XXXX-XXXX-XXXX">
+                </div>
+                <div class="form-group">
+                    <div class="form-label">YOUR DEVICE ID (HWID)</div>
+                    <div class="hwid-display" id="signupHwid"></div>
+                </div>
+                
+                <button class="btn" onclick="signup()">CREATE ACCOUNT</button>
+                <button class="btn btn-secondary" onclick="closeModal()">CANCEL</button>
+            </div>
+        </div>
     </div>
     
     <script>
-        let scanning = false;
-        let startTime = null;
-        let devices = [];
+        // HWID Generation
+        function generateHWID() {
+            const nav = navigator.userAgent;
+            const screen = window.screen;
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const lang = navigator.language;
+            const hardware = navigator.hardwareConcurrency || 0;
+            const deviceMemory = navigator.deviceMemory || 0;
+            
+            const str = nav + '|' + screen.width + 'x' + screen.height + '|' + timezone + '|' + lang + '|' + hardware + '|' + deviceMemory;
+            
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            
+            const abs = Math.abs(hash).toString(16).padStart(8, '0');
+            return abs.substring(0, 4).toUpperCase() + '-' + abs.substring(4, 8).toUpperCase() + '-' + abs.substring(0, 4).toUpperCase();
+        }
         
-        function toggleScanner() {
+        const hwid = generateHWID();
+        
+        let currentUser = null;
+        let scanning = false;
+        let scanStart = null;
+        let devices = [];
+        let audioCtx = null;
+        
+        init();
+        
+        function init() {
+            const session = localStorage.getItem('blueMeanieSession');
+            if (session) {
+                try {
+                    currentUser = JSON.parse(session);
+                    showLoggedIn();
+                } catch(e) {}
+            }
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => showPage(tab.dataset.page));
+            });
+            
+            document.getElementById('signupHwid').textContent = hwid;
+            loadLeaderboard();
+            loadChat();
+        }
+        
+        function showPage(pageId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('[data-page="' + pageId + '"]').classList.add('active');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + pageId).classList.add('active');
+        }
+        
+        function showLogin() { document.getElementById('loginModal').style.display = 'block'; }
+        function showSignup() { document.getElementById('signupModal').style.display = 'block'; }
+        function closeModal() {
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('signupModal').style.display = 'none';
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('signupError').style.display = 'none';
+        }
+        
+        function login() {
+            const email = document.getElementById('loginEmail').value;
+            const accessKey = document.getElementById('loginKey').value;
+            
+            if (!email || !accessKey) {
+                showError('loginError', 'Please fill all fields');
+                return;
+            }
+            
+            const deviceKey = hwid + '-' + accessKey.substring(0, 4);
+            
+            currentUser = {
+                email: email,
+                username: email.split('@')[0],
+                deviceKey: deviceKey,
+                hwid: hwid,
+                total: 0,
+                streak: 0,
+                score: 0
+            };
+            
+            localStorage.setItem('blueMeanieSession', JSON.stringify(currentUser));
+            closeModal();
+            showLoggedIn();
+            loadProfile();
+        }
+        
+        function signup() {
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const accessKey = document.getElementById('signupKey').value;
+            
+            if (!name || !email || !accessKey) {
+                showError('signupError', 'Please fill all fields');
+                return;
+            }
+            
+            const deviceKey = hwid + '-' + accessKey.substring(0, 4);
+            
+            currentUser = {
+                email: email,
+                username: name,
+                deviceKey: deviceKey,
+                hwid: hwid,
+                total: 0,
+                streak: 0,
+                score: 0
+            };
+            
+            localStorage.setItem('blueMeanieSession', JSON.stringify(currentUser));
+            closeModal();
+            showLoggedIn();
+            showPage('radar');
+        }
+        
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('blueMeanieSession');
+            document.getElementById('userBar').style.display = 'none';
+            document.getElementById('authRequired').style.display = 'block';
+            document.getElementById('profileCard').style.display = 'none';
+        }
+        
+        function showLoggedIn() {
+            document.getElementById('userBar').style.display = 'flex';
+            document.getElementById('userDisplay').textContent = currentUser.username;
+            loadProfile();
+        }
+        
+        function showError(id, msg) {
+            const el = document.getElementById(id);
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+        
+        function toggleScan() {
             scanning = !scanning;
-            const btn = document.querySelector('.btn');
-            const indicator = document.getElementById('indicator');
-            const status = document.getElementById('status');
+            const btn = document.getElementById('scanBtn');
             
             if (scanning) {
-                btn.textContent = 'Stop Scanner';
-                btn.style.background = '#FF0000';
-                indicator.classList.add('active');
-                status.textContent = 'SCANNING';
-                startTime = Date.now();
+                btn.textContent = 'STOP SCAN';
+                btn.classList.add('scanning');
+                scanStart = Date.now();
                 updateTimer();
             } else {
-                btn.textContent = 'Start Scanner';
-                btn.style.background = '#1976D2';
-                indicator.classList.remove('active');
-                status.textContent = 'IDLE';
+                btn.textContent = 'START SCAN';
+                btn.classList.remove('scanning');
             }
         }
         
         function updateTimer() {
-            if (!scanning || !startTime) return;
+            if (!scanning || !scanStart) return;
             
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const elapsed = Math.floor((Date.now() - scanStart) / 1000);
             const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
             const secs = (elapsed % 60).toString().padStart(2, '0');
             document.getElementById('scanTime').textContent = mins + ':' + secs;
             
             setTimeout(updateTimer, 1000);
+        }
+        
+        function simulateDetection() {
+            if (!scanning) return;
+            
+            const demoDevices = [
+                { mac: '00:25:DF:A1:B2:C3', name: 'AXON_CAMERA', rssi: -65 },
+                { mac: 'FC:A9:E8:12:34:56', name: 'TASER_7', rssi: -72 },
+                { mac: 'X4G:S01506', name: 'AXON_BODY', rssi: -80 },
+            ];
+            
+            const device = demoDevices[Math.floor(Math.random() * demoDevices.length)];
+            if (!devices.find(d => d.mac === device.mac)) {
+                devices.push(device);
+                onDeviceDetected(device);
+            }
+        }
+        
+        function onDeviceDetected(device) {
+            playAlert();
+            
+            document.getElementById('deviceCount').textContent = devices.length;
+            document.getElementById('signal').textContent = device.rssi;
+            document.getElementById('signalBox').classList.add('alert');
+            
+            document.getElementById('targetName').textContent = device.name;
+            document.getElementById('targetMac').textContent = device.mac;
+            document.getElementById('targetRssi').textContent = device.rssi;
+            document.getElementById('targetTime').textContent = new Date().toLocaleTimeString();
+            document.getElementById('targetAlert').classList.add('active');
+            
+            if (currentUser) { updateScore(10); }
+        }
+        
+        function playAlert() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.frequency.value = 880;
+                osc.type = 'square';
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } catch(e) {}
+        }
+        
+        setInterval(simulateDetection, 30000);
+        
+        function loadLeaderboard() {
+            const demoUsers = [
+                { name: 'GhostHunter', total: 156, streak: 45, score: 2450 },
+                { name: 'RadarOps', total: 98, streak: 23, score: 1820 },
+                { name: 'AxonSeeker', total: 87, streak: 12, score: 1540 },
+                { name: 'SignalChaser', total: 65, streak: 8, score: 980 },
+                { name: 'BlueWatcher', total: 43, streak: 5, score: 650 },
+            ];
+            
+            let html = '';
+            demoUsers.forEach((user, i) => {
+                const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+                html += '<div class="leader-item"><div class="leader-rank ' + rankClass + '">#' + (i + 1) + '</div><div class="leader-info"><div class="leader-name">' + user.name + '</div><div class="leader-stats">' + user.total + ' detected • ' + user.streak + ' day streak</div></div><div class="leader-score">' + user.score + ' pts</div></div>';
+            });
+            
+            document.getElementById('leaderboardList').innerHTML = html;
+        }
+        
+        function loadChat() {
+            const demoMessages = [
+                { user: 'GhostHunter', text: 'Just caught a TASER 7 downtown! 🔥', time: '2 min ago' },
+                { user: 'RadarOps', text: 'Anyone detecting near the stadium?', time: '5 min ago' },
+                { user: 'AxonSeeker', text: 'BlueMeanie app is sick 🔴', time: '10 min ago' },
+            ];
+            
+            let html = '';
+            demoMessages.forEach(msg => {
+                const isOwn = currentUser && currentUser.username === msg.user;
+                html += '<div class="chat-message ' + (isOwn ? 'own' : '') + '"><div class="chat-user">' + msg.user + '</div><div class="chat-text">' + msg.text + '</div><div class="chat-time">' + msg.time + '</div></div>';
+            });
+            
+            document.getElementById('chatMessages').innerHTML = html;
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            
+            if (!text) return;
+            if (!currentUser) { alert('Please sign in to chat'); showLogin(); return; }
+            
+            const el = document.createElement('div');
+            el.className = 'chat-message own';
+            el.innerHTML = '<div class="chat-user">' + currentUser.username + '</div><div class="chat-text">' + text + '</div><div class="chat-time">Just now</div>';
+            
+            const container = document.getElementById('chatMessages');
+            container.insertBefore(el, container.firstChild);
+            
+            input.value = '';
+        }
+        
+        function loadProfile() {
+            if (!currentUser) {
+                document.getElementById('authRequired').style.display = 'block';
+                document.getElementById('profileCard').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('authRequired').style.display = 'none';
+            document.getElementById('profileCard').style.display = 'block';
+            
+            document.getElementById('profileName').textContent = currentUser.username;
+            document.getElementById('profileTotal').textContent = currentUser.total || 0;
+            document.getElementById('profileStreak').textContent = currentUser.streak || 0;
+            document.getElementById('profileScore').textContent = currentUser.score || 0;
+            document.getElementById('profileRank').textContent = '#' + (Math.floor(Math.random() * 50) + 1);
+            document.getElementById('deviceKey').textContent = currentUser.deviceKey || 'N/A';
+        }
+        
+        function updateScore(points) {
+            if (!currentUser) return;
+            
+            currentUser.score = (currentUser.score || 0) + points;
+            currentUser.total = (currentUser.total || 0) + 1;
+            
+            localStorage.setItem('blueMeanieSession', JSON.stringify(currentUser));
+            
+            document.getElementById('profileTotal').textContent = currentUser.total;
+            document.getElementById('profileScore').textContent = currentUser.score;
         }
     </script>
 </body>
