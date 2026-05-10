@@ -1,0 +1,31 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Background circle -->
+    <path
+        android:fillColor="#0A0A0A"
+        android:pathData="M54,54m-52,0a52,52 0,1 1,104 0a52,52 0,1 1,-104 0"/>
+    <!-- Radar rings -->
+    <path
+        android:strokeColor="#FF3333"
+        android:strokeWidth="1"
+        android:fillColor="#00000000"
+        android:pathData="M54,54m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0"/>
+    <path
+        android:strokeColor="#FF3333"
+        android:strokeWidth="1.5"
+        android:fillColor="#00000000"
+        android:pathData="M54,54m-25,0a25,25 0,1 1,50 0a25,25 0,1 1,-50 0"/>
+    <!-- Center dot -->
+    <path
+        android:fillColor="#FF3333"
+        android:pathData="M54,54m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0"/>
+    <!-- Scan wave -->
+    <path
+        android:strokeColor="#4000FFD1"
+        android:strokeWidth="2"
+        android:fillColor="#00000000"
+        android:pathData="M54,54m-10,0a10,10 0,0 1,20,0"/>
+</vector>

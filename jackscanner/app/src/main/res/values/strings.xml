@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">JackScanner</string>
+    <string name="app_tagline">BLE Device Detector</string>
+    
+    <!-- Status -->
+    <string name="status_label">STATUS</string>
+    <string name="ready_status">Ready</string>
+    <string name="scanning_status">Scanning</string>
+    <string name="devices_found">Devices: %1$d</string>
+    <string name="devices_found_plural">%1$d devices</string>
+    
+    <!-- Buttons -->
+    <string name="start_scan">START SCAN</string>
+    <string name="stop_scan">STOP</string>
+    <string name="settings">SETTINGS</string>
+    
+    <!-- Target -->
+    <string name="target_oui">Target OUI: 00:25:DF</string>
+    
+    <!-- Alerts -->
+    <string name="alert_title">⚡ TARGET DETECTED</string>
+    <string name="alert_message">%1$s\n%2$s\nSignal: %3$d dBm</string>
+    <string name="unknown_device">Unknown Device</string>
+    
+    <!-- Service -->
+    <string name="service_title">JackScanner Active</string>
+    <string name="service_scanning">Scanning for devices…</string>
+    
+    <!-- Notifications -->
+    <string name="channel_name">Scanner Alerts</string>
+    <string name="channel_description">Alerts when target devices are detected</string>
+    
+    <!-- Errors -->
+    <string name="bluetooth_required">Enable Bluetooth to scan</string>
+    <string name="permission_required">Permissions required</string>
+</resources>
