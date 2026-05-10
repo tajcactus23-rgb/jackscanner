@@ -1,0 +1,26 @@
+{
+  "leaderboard": [
+    {"name": "GhostHunter", "total": 156, "streak": 45, "score": 2450},
+    {"name": "RadarOps", "total": 98, "streak": 23, "score": 1820},
+    {"name": "AxonSeeker", "total": 87, "streak": 12, "score": 1540},
+    {"name": "SignalChaser", "total": 65, "streak": 8, "score": 980},
+    {"name": "BlueWatcher", "total": 43, "streak": 5, "score": 650},
+    {"name": "NightOwl", "total": 32, "streak": 7, "score": 520},
+    {"name": "UrbanScout", "total": 28, "streak": 3, "score": 410},
+    {"name": "TechRunner", "total": 21, "streak": 2, "score": 320},
+    {"name": "DataRunner", "total": 18, "streak": 4, "score": 280},
+    {"name": "WaveHunter", "total": 15, "streak": 1, "score": 190}
+  ],
+  "chat": [
+    {"user": "GhostHunter", "text": "Just caught a TASER 7 downtown! 🔥", "time": "2 min ago"},
+    {"user": "RadarOps", "text": "Anyone detecting near the stadium?", "time": "5 min ago"},
+    {"user": "AxonSeeker", "text": "BlueMeanie app is sick 🔴", "time": "10 min ago"},
+    {"user": "SignalChaser", "text": "3rd TASER today, best streak yet!", "time": "15 min ago"},
+    {"user": "BlueWatcher", "text": "New update downloaded ✅", "time": "22 min ago"}
+  ],
+  "stats": {
+    "totalDetections": 545,
+    "activeUsers": 87,
+    "countries": 12
+  }
+}
