@@ -54,6 +54,9 @@ jobs:
           jackscanner/app/build/outputs/apk/debug/*.apk
           axonbleeder/app/build/outputs/apk/debug/*.apk
         
+    - name: Wait for rate limit
+      run: sleep 10
+        
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
@@ -65,8 +68,8 @@ jobs:
           ## BlueMeanie BLE Scanner for Axon/TASER Devices
           
           ### Apps Included
-          - **JackScanner** - Original BLE scanner
-          - **BlueMeanie** - Branded Axon detector
+          - JackScanner - Original BLE scanner
+          - BlueMeanie - Branded Axon detector
           
           ### Detection Features
           - MAC OUI: 00:25:DF (Axon), FC:A9:E8, X4G
@@ -77,7 +80,6 @@ jobs:
           ### Install
           - Android: Enable "Install from unknown sources" and install APK
           - iOS: See IOS_INSTALL.md for Sideloadly/AltStore guide
-        generate_release_notes: true
         draft: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
