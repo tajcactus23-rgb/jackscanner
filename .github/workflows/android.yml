@@ -65,11 +65,28 @@ jobs:
         
     - name: Create Release
       uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
       with:
         files: |
           jackscanner/app/build/outputs/apk/debug/*.apk
           axonbleeder/app/build/outputs/apk/debug/*.apk
+        name: BlueMeanie Scanner Release
+        body: |
+          ## BlueMeanie BLE Scanner for Axon/TASER Devices
+          
+          ### Apps Included
+          - **JackScanner** - Original BLE scanner
+          - **BlueMeanie** - Branded Axon detector
+          
+          ### Detection Features
+          - MAC OUI: 00:25:DF (Axon), FC:A9:E8, X4G
+          - Device Names: AXON_CAMERA, TASER, AXON_BODY
+          - Background scanning via foreground service
+          - Alert notifications with sound/vibration
+          
+          ### Install
+          - Android: Enable "Install from unknown sources" and install APK
+          - iOS: See IOS_INSTALL.md for Sideloadly/AltStore guide
         generate_release_notes: true
+        draft: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
