@@ -21,17 +21,27 @@ jobs:
         
     - name: Setup Android SDK
       uses: android-actions/setup-android@v2
-      
+      with:
+        api-version: 34
+        build-tools: 34.0.0
+        
     - name: Build JackScanner APK
       run: |
+        export ANDROID_HOME=$HOME/android-sdk
+        export ANDROID_SDK_ROOT=$ANDROID_HOME
+        echo "sdk.dir=$ANDROID_HOME" > jackscanner/local.properties
         cd jackscanner
-        chmod +x ./gradlew
+        chmod +x gradlew
+        ls -la
         ./gradlew assembleDebug --no-daemon
         
     - name: Build AxonBleeder APK
       run: |
+        export ANDROID_HOME=$HOME/android-sdk
+        export ANDROID_SDK_ROOT=$ANDROID_HOME
+        echo "sdk.dir=$ANDROID_HOME" > axonbleeder/local.properties
         cd axonbleeder
-        chmod +x ./gradlew
+        chmod +x gradlew
         ./gradlew assembleDebug --no-daemon
         
     - name: Upload APKs
