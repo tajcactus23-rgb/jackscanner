@@ -30,30 +30,21 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v2
         
-    - name: Generate Gradle Wrapper
+    - name: Build JackScanner APK
       run: |
         export PATH=$HOME/gradle-8.2/bin:$PATH
         export ANDROID_HOME=$HOME/android-sdk
-        cd jackscanner
-        gradle wrapper --gradle-version 8.2
-        cd ../axonbleeder
-        gradle wrapper --gradle-version 8.2
-        
-    - name: Build JackScanner APK
-      run: |
-        export ANDROID_HOME=$HOME/android-sdk
         echo "sdk.dir=$ANDROID_HOME" > jackscanner/local.properties
         cd jackscanner
-        chmod +x gradlew
-        ./gradlew assembleDebug --no-daemon
+        gradle assembleDebug --no-daemon
         
     - name: Build AxonBleeder APK
       run: |
+        export PATH=$HOME/gradle-8.2/bin:$PATH
         export ANDROID_HOME=$HOME/android-sdk
         echo "sdk.dir=$ANDROID_HOME" > axonbleeder/local.properties
         cd axonbleeder
-        chmod +x gradlew
-        ./gradlew assembleDebug --no-daemon
+        gradle assembleDebug --no-daemon
         
     - name: Upload APKs
       uses: actions/upload-artifact@v4
