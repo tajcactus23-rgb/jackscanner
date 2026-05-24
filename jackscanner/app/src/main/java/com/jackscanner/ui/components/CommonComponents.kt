@@ -1,4 +1,5 @@
 package com.jackscanner.ui.components
+import com.jackscanner.ui.theme.sp
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background

@@ -76,7 +76,7 @@ jobs:
       if: success()
       with:
         name: bluemeanie-apk
-        path: jackscanner/app/build/outputs/apk/debug/*.apk
+        path: app/build/outputs/apk/debug/*.apk
 
   build-release:
     runs-on: ubuntu-latest

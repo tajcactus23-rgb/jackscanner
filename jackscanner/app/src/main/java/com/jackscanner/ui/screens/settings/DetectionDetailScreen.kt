@@ -1,23 +1,41 @@
 package com.jackscanner.ui.screens.settings
 
 import androidx.compose.foundation.background
+import com.jackscanner.ui.theme.sp
 import androidx.compose.foundation.layout.*
+import com.jackscanner.ui.theme.sp
 import androidx.compose.foundation.rememberScrollState
+import com.jackscanner.ui.theme.sp
 import androidx.compose.foundation.verticalScroll
+import com.jackscanner.ui.theme.sp
 import androidx.compose.material.icons.Icons
+import com.jackscanner.ui.theme.sp
 import androidx.compose.material.icons.filled.ArrowBack
+import com.jackscanner.ui.theme.sp
 import androidx.compose.material3.*
+import com.jackscanner.ui.theme.sp
 import androidx.compose.runtime.*
+import com.jackscanner.ui.theme.sp
 import androidx.compose.ui.Alignment
+import com.jackscanner.ui.theme.sp
 import androidx.compose.ui.Modifier
+import com.jackscanner.ui.theme.sp
 import androidx.compose.ui.text.font.FontWeight
+import com.jackscanner.ui.theme.sp
 import androidx.compose.ui.unit.dp
+import com.jackscanner.ui.theme.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.jackscanner.ui.theme.sp
 import com.jackscanner.ui.components.DetectionNotice
+import com.jackscanner.ui.theme.sp
 import com.jackscanner.ui.components.GlassCard
+import com.jackscanner.ui.theme.sp
 import com.jackscanner.ui.theme.BlueMeanieTheme
+import com.jackscanner.ui.theme.sp
 import java.text.SimpleDateFormat
+import com.jackscanner.ui.theme.sp
 import java.util.*
+import com.jackscanner.ui.theme.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
