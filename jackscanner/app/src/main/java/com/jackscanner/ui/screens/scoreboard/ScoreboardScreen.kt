@@ -334,4 +334,3 @@ private fun getRankColor(rank: UserRank) = when (rank) {
     UserRank.LEGEND -> BlueMeanieTheme.colors.statusGold
 }
 
-    get() = androidx.compose.ui.unit.TextUnit(this.toFloat(), androidx.compose.ui.unit.TextUnitType.Sp)
