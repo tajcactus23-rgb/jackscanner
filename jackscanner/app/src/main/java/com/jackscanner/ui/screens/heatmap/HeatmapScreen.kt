@@ -287,7 +287,3 @@ private fun DetailItem(label: String, value: String) {
             style = MaterialTheme.typography.labelSmall,
             color = colors.textTertiary
         )
-    }
-}
-
-    get() = androidx.compose.ui.unit.TextUnit(this.toFloat(), androidx.compose.ui.unit.TextUnitType.Sp)
