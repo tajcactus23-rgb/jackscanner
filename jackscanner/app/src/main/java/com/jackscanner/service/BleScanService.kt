@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
+import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
@@ -16,25 +17,50 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
+import com.jackscanner.BlueMeanieApp
 import com.jackscanner.R
+import com.jackscanner.domain.model.Detection
+import com.jackscanner.domain.model.ScannerStatus
+import com.jackscanner.domain.model.ScanMode
+import com.jackscanner.domain.repository.CommunityRepository
+import com.jackscanner.domain.repository.DetectionRepository
 import com.jackscanner.ui.MainActivity
 import com.jackscanner.utils.OuiMapper
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import java.util.UUID
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class BleScanService : Service() {
+
+    @Inject
+    lateinit var detectionRepository: DetectionRepository
+    
+    @Inject
+    lateinit var communityRepository: CommunityRepository
 
     private var bluetoothLeScanner: android.bluetooth.le.BluetoothLeScanner? = null
     private var scanCallback: android.bluetooth.le.ScanCallback? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var isScanning = false
     
-    // Keep track of detected devices for this session
-    private val detectedDevices = mutableSetOf<String>()
+    private val binder = LocalBinder()
+    private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    
+    private val detectedDevices = mutableMapOf<String, Detection>()
 
     companion object {
         const val ACTION_START_SCANNING = "com.jackscanner.START_SCANNING"
         const val ACTION_STOP_SCANNING = "com.jackscanner.STOP_SCANNING"
+        const val ACTION_PAUSE_SCANNING = "com.jackscanner.PAUSE_SCANNING"
+        const val ACTION_RESUME_SCANNING = "com.jackscanner.RESUME_SCANNING"
         
-        const val NOTIFICATION_CHANNEL_ID = "jackscanner_channel"
+        const val NOTIFICATION_CHANNEL_ID_SCANNING = "bluemeanie_scanning"
+        const val NOTIFICATION_CHANNEL_ID_ALERTS = "bluemeanie_alerts"
         const val NOTIFICATION_ID = 1
         const val ALERT_NOTIFICATION_ID = 2
         
@@ -43,17 +69,26 @@ class BleScanService : Service() {
         
         var detectedCount = 0
             private set
-            
-        // Target OUI (Axon): 00:25:DF
-        private const val TARGET_OUI = "00:25:DF"
-        private const val TARGET_OUI_LOWER = "00:25:df"
+        
+        var status = ScannerStatus.IDLE
+            private set
+        
+        var detectionsToday = 0
+            private set
+        
+        var lastDetectionTime: Long = 0
+            private set
     }
 
-    override fun onBind(intent: Intent?): IBinder? = null
+    inner class LocalBinder : Binder() {
+        fun getService(): BleScanService = this@BleScanService
+    }
+
+    override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onCreate() {
         super.onCreate()
-        createNotificationChannel()
+        createNotificationChannels()
         acquireWakeLock()
     }
 
@@ -61,6 +96,8 @@ class BleScanService : Service() {
         when (intent?.action) {
             ACTION_START_SCANNING -> startScanning()
             ACTION_STOP_SCANNING -> stopScanning()
+            ACTION_PAUSE_SCANNING -> pauseScanning()
+            ACTION_RESUME_SCANNING -> resumeScanning()
         }
         return START_STICKY
     }
@@ -71,6 +108,36 @@ class BleScanService : Service() {
         super.onDestroy()
     }
 
+    private fun createNotificationChannels() {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        // Scanning Channel
+        val scanningChannel = NotificationChannel(
+            NOTIFICATION_CHANNEL_ID_SCANNING,
+            getString(R.string.channel_scanning_name),
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = getString(R.string.channel_scanning_description)
+            setShowBadge(false)
+            enableVibration(false)
+            setSound(null, null)
+        }
+
+        // Alerts Channel
+        val alertsChannel = NotificationChannel(
+            NOTIFICATION_CHANNEL_ID_ALERTS,
+            getString(R.string.channel_alerts_name),
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = getString(R.string.channel_alerts_description)
+            enableVibration(true)
+            enableLights(true)
+            setShowBadge(true)
+        }
+
+        notificationManager.createNotificationChannels(listOf(scanningChannel, alertsChannel))
+    }
+
     private fun startScanning() {
         if (isScanning) return
         
@@ -78,11 +145,13 @@ class BleScanService : Service() {
         
         isScanning = true
         isRunning = true
+        status = ScannerStatus.SCANNING
         
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as android.bluetooth.BluetoothManager
         val bluetoothAdapter = bluetoothManager.adapter
         
         if (bluetoothAdapter == null) {
+            status = ScannerStatus.ERROR
             stopSelf()
             return
         }
@@ -90,6 +159,7 @@ class BleScanService : Service() {
         bluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
         
         if (bluetoothLeScanner == null) {
+            status = ScannerStatus.ERROR
             stopSelf()
             return
         }
@@ -101,26 +171,15 @@ class BleScanService : Service() {
                 val deviceName = device.name
                 val rssi = result.rssi
                 
-                // Check if this is an Axon device using OUI + name detection
                 if (isTargetDevice(address, deviceName, rssi)) {
-                    if (!detectedDevices.contains(address)) {
-                        detectedDevices.add(address)
-                        detectedCount = detectedDevices.size
-                    }
-                    
-                    val displayName = deviceName ?: getString(R.string.unknown_device)
-                    val signalStrength = rssi
-                    
-                    android.util.Log.i("BleScanService", "Target detected: $address ($displayName) RSSI: $signalStrength")
-                    
-                    // Alert!
-                    sendAlertNotification(address, displayName, signalStrength)
-                    triggerAlert()
+                    handleDetection(address, deviceName, rssi, result)
                 }
             }
             
             override fun onScanFailed(errorCode: Int) {
                 android.util.Log.e("BleScanService", "Scan failed with error: $errorCode")
+                status = ScannerStatus.ERROR
+                updateNotification()
             }
         }
         
@@ -131,16 +190,82 @@ class BleScanService : Service() {
         
         try {
             bluetoothLeScanner?.startScan(null, scanSettings, scanCallback)
+            updateNotification()
         } catch (e: SecurityException) {
             android.util.Log.e("BleScanService", "Permission denied: ${e.message}")
+            status = ScannerStatus.ERROR
             stopSelf()
         }
     }
 
+    private fun handleDetection(address: String, deviceName: String?, rssi: Int, result: android.bluetooth.le.ScanResult) {
+        serviceScope.launch {
+            val now = System.currentTimeMillis()
+            val displayName = deviceName ?: getString(R.string.unknown_device)
+            
+            android.util.Log.i("BleScanService", "Target detected: $address ($displayName) RSSI: $rssi")
+            
+            // Create or update detection
+            val existingDetection = detectedDevices[address]
+            val detection = if (existingDetection != null) {
+                existingDetection.copy(
+                    lastSeen = now,
+                    rssi = rssi,
+                    observedSignals = existingDetection.observedSignals + 1
+                )
+            } else {
+                Detection(
+                    id = UUID.randomUUID().toString(),
+                    macAddress = address,
+                    deviceName = displayName,
+                    rssi = rssi,
+                    timestamp = now,
+                    firstSeen = now,
+                    lastSeen = now,
+                    observedSignals = 1
+                )
+            }
+            
+            detectedDevices[address] = detection
+            detectedCount = detectedDevices.size
+            detectionsToday++
+            lastDetectionTime = now
+            
+            // Save to database
+            detectionRepository.saveDetection(detection)
+            
+            // Update notification
+            updateNotification()
+            
+            // Send alert notification
+            sendAlertNotification(detection)
+            triggerAlert()
+        }
+    }
+
+    private fun pauseScanning() {
+        isScanning = false
+        status = ScannerStatus.PAUSED
+        
+        try {
+            scanCallback?.let {
+                bluetoothLeScanner?.stopScan(it)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("BleScanService", "Error pausing scan: ${e.message}")
+        }
+        
+        updateNotification()
+    }
+
+    private fun resumeScanning() {
+        startScanning()
+    }
+
     private fun stopScanning() {
         isScanning = false
-        // Keep detectedCount until manually cleared
         isRunning = false
+        status = ScannerStatus.IDLE
         
         try {
             scanCallback?.let {
@@ -154,38 +279,12 @@ class BleScanService : Service() {
         stopSelf()
     }
     
-    /**
-     * Check if this is a target Axon device using OUI + name detection
-     * Uses multiple fingerprints: MAC OUI, device name patterns
-     */
     private fun isTargetDevice(macAddress: String?, deviceName: String?, rssi: Int): Boolean {
         if (macAddress.isNullOrBlank()) return false
-        
-        // Use OuiMapper for comprehensive detection
-        // Also pass device name for detection
-        val name = if (deviceName.isNullOrBlank()) null else deviceName
-        
-        return OuiMapper.isAxonDevice(macAddress, name, rssi)
-    }
-    
-    /**
-     * Legacy OUI check - kept for reference
-     */
-    private fun isTargetDevice(macAddress: String?): Boolean {
-        if (macAddress.isNullOrBlank()) return false
-        
-        val normalized = macAddress.uppercase().replace("-", ":").trim()
-        
-        // Check first 8 characters (OUI)
-        if (normalized.length >= 8) {
-            val oui = normalized.substring(0, 8)
-            return oui == TARGET_OUI || oui == TARGET_OUI_LOWER
-        }
-        
-        return false
+        return OuiMapper.isAxonDevice(macAddress, deviceName, rssi)
     }
 
-    private fun sendAlertNotification(address: String, name: String, rssi: Int) {
+    private fun sendAlertNotification(detection: Detection) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
         val intent = Intent(this, MainActivity::class.java).apply {
@@ -199,20 +298,18 @@ class BleScanService : Service() {
         
         val alertSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         
-        val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+        val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID_ALERTS)
             .setContentTitle(getString(R.string.alert_title))
-            .setContentText(getString(R.string.alert_message, name, address, rssi))
+            .setContentText(getString(R.string.alert_message, detection.deviceName ?: "Unknown", detection.macAddress))
             .setSmallIcon(R.drawable.ic_alert)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setAutoCancel(false)
+            .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .setSound(alertSound)
             .setVibrate(longArrayOf(0, 500, 200, 500, 200, 500))
             .setOnlyAlertOnce(false)
             .build()
-        
-        notification.flags = notification.flags or Notification.FLAG_INSISTENT
         
         try {
             notificationManager.notify(ALERT_NOTIFICATION_ID, notification)
@@ -222,7 +319,6 @@ class BleScanService : Service() {
     }
 
     private fun triggerAlert() {
-        // Vibrate
         try {
             val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
@@ -243,7 +339,6 @@ class BleScanService : Service() {
             android.util.Log.e("BleScanService", "Vibration error: ${e.message}")
         }
         
-        // Play sound
         try {
             val notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             val ringtone = RingtoneManager.getRingtone(applicationContext, notification)
@@ -260,51 +355,67 @@ class BleScanService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
-        val stopIntent = Intent(this, BleScanService::class.java).apply {
-            action = ACTION_STOP_SCANNING
+        val pauseIntent = Intent(this, BleScanService::class.java).apply {
+            action = ACTION_PAUSE_SCANNING
         }
-        val stopPendingIntent = PendingIntent.getService(
-            this, 1, stopIntent,
+        val pausePendingIntent = PendingIntent.getService(
+            this, 1, pauseIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
-        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+        val heatmapIntent = Intent(this, MainActivity::class.java).apply {
+            putExtra("navigate", "heatmap")
+        }
+        val heatmapPendingIntent = PendingIntent.getActivity(
+            this, 2, heatmapIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
+        val feedIntent = Intent(this, MainActivity::class.java).apply {
+            putExtra("navigate", "feed")
+        }
+        val feedPendingIntent = PendingIntent.getActivity(
+            this, 3, feedIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
+        val lastDetectionStr = if (lastDetectionTime > 0) {
+            java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+                .format(java.util.Date(lastDetectionTime))
+        } else {
+            "--:--:--"
+        }
+        
+        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID_SCANNING)
             .setContentTitle(getString(R.string.service_title))
             .setContentText(getString(R.string.service_scanning))
             .setSmallIcon(R.drawable.ic_scan)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setContentIntent(pendingIntent)
-            .addAction(R.drawable.ic_stop, getString(R.string.stop), stopPendingIntent)
+            .setStyle(NotificationCompat.BigTextStyle()
+                .bigText("Detections Today: $detectionsToday\nLast Detection: $lastDetectionStr\nBluetooth: Active\nBackground Monitoring: Active"))
+            .addAction(R.drawable.ic_scan, "Heatmap", heatmapPendingIntent)
+            .addAction(R.drawable.ic_scan, "Feed", feedPendingIntent)
+            .addAction(R.drawable.ic_stop, getString(R.string.pause), pausePendingIntent)
             .build()
     }
 
-    private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            NOTIFICATION_CHANNEL_ID,
-            getString(R.string.channel_name),
-            NotificationManager.IMPORTANCE_HIGH
-        ).apply {
-            description = getString(R.string.channel_description)
-            enableVibration(true)
-            enableLights(true)
-            
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ALARM)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-            setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), audioAttributes)
-        }
-        
+    private fun updateNotification() {
+        val notification = createServiceNotification()
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(channel)
+        try {
+            notificationManager.notify(NOTIFICATION_ID, notification)
+        } catch (e: Exception) {
+            android.util.Log.e("BleScanService", "Error updating notification: ${e.message}")
+        }
     }
 
     private fun acquireWakeLock() {
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         wakeLock = powerManager.newWakeLock(
             PowerManager.PARTIAL_WAKE_LOCK,
-            "JackScanner::BleScanWakeLock"
+            "BlueMeanie::BleScanWakeLock"
         ).apply {
             acquire(10 * 60 * 60 * 1000L)
         }
