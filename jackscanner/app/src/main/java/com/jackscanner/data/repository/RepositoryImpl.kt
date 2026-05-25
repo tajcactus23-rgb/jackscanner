@@ -92,7 +92,12 @@ class DetectionRepositoryImpl @Inject constructor(
             observedSignals = observedSignals,
             manufacturerData = manufacturerData,
             advertisementData = advertisementData,
-            serviceUuids = gson.fromJson(serviceUuids, object : TypeToken<List<String>>() {}.type) ?: emptyList(),
+            serviceUuids = try {
+                if (serviceUuids.isNullOrBlank()) emptyList()
+                else gson.fromJson(serviceUuids, object : TypeToken<List<String>>() {}.type) ?: emptyList()
+            } catch (e: Exception) {
+                emptyList()
+            },
             latitude = latitude,
             longitude = longitude,
             isAnonymous = isAnonymous

@@ -341,7 +341,7 @@ private fun UsernameStep(
             onValueChange = onUsernameChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Username") },
-            placeholder = { Text(if (isAnonymous) "Anonymous mode enabled" else "Enter your username") },
+            placeholder = { Text(if (isAnonymous) "Anonymous mode - your choice" else "Enter your username") },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = colors.primary,
                 unfocusedBorderColor = colors.border,

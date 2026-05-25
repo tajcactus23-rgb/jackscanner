@@ -168,7 +168,7 @@ private fun FeedDetectionItem(
             ) {
                 FeedStatItem(
                     label = "SIGNALS",
-                    value = detection.observedSignals.toString()
+                    value = (detection.observedSignals ?: 0).toString()
                 )
                 FeedStatItem(
                     label = "FIRST SEEN",
@@ -180,7 +180,7 @@ private fun FeedDetectionItem(
                 )
                 FeedStatItem(
                     label = "RSSI",
-                    value = "${detection.rssi} dBm"
+                    value = "${detection.rssi ?: 0} dBm"
                 )
             }
         }

@@ -51,8 +51,13 @@ class HomeViewModel @Inject constructor(
         }
         
         viewModelScope.launch {
-            val count = detectionRepository.getDetectionCountToday()
-            _uiState.update { it.copy(detectionsToday = count) }
+            try {
+                val count = detectionRepository.getDetectionCountToday()
+                _uiState.update { it.copy(detectionsToday = count) }
+            } catch (e: Exception) {
+                // Handle error gracefully
+                _uiState.update { it.copy(detectionsToday = 0) }
+            }
         }
     }
     

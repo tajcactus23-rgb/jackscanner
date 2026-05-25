@@ -320,13 +320,13 @@ private fun DetectionItem(
             
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "${detection.rssi} dBm",
+                    text = "${detection.rssi ?: 0} dBm",
                     style = MaterialTheme.typography.labelMedium,
                     color = colors.statusWarning,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${detection.observedSignals} signals",
+                    text = "${detection.observedSignals ?: 0} signals",
                     style = MaterialTheme.typography.labelSmall,
                     color = colors.textTertiary
                 )
