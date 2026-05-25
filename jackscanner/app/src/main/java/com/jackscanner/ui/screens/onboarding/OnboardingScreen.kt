@@ -264,9 +264,9 @@ private fun PermissionStep(
         GlassCard {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 PermissionDetail("Why Required?", whyRequired)
-                HorizontalDivider(color = colors.border)
+                Divider(color = colors.border)
                 PermissionDetail("How Used", howUsed)
-                HorizontalDivider(color = colors.border)
+                Divider(color = colors.border)
                 PermissionDetail("Privacy Impact", privacyImpact)
             }
         }

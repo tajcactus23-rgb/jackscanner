@@ -148,7 +148,7 @@ private fun FeedDetectionItem(
                         style = MaterialTheme.typography.labelMedium,
                         color = colors.statusDanger,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
+                        letterSpacing = (0.5).sp
                     )
                     Text(
                         text = detection.deviceName ?: "Unknown Device",

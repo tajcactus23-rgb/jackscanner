@@ -306,6 +306,7 @@ private fun LeaderboardItem(
     }
 }
 
+@Composable
 private fun getRankColor(rank: UserRank) = when (rank) {
     UserRank.OBSERVER -> BlueMeanieTheme.colors.textTertiary
     UserRank.SCOUT -> BlueMeanieTheme.colors.statusSilver

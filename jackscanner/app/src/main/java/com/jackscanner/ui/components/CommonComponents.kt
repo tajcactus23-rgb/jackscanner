@@ -1,5 +1,5 @@
 package com.jackscanner.ui.components
-import com.jackscanner.ui.theme.sp
+
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -514,7 +514,7 @@ fun SectionHeader(
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.Bold,
         color = colors.textTertiary,
-        letterSpacing = 1.5.sp,
+        letterSpacing = (1.5).sp,
         modifier = modifier.padding(vertical = 8.dp)
     )
 }

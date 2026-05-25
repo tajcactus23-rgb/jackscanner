@@ -156,7 +156,7 @@ private fun HomeHeader(
                 text = "AXON DETECTION SYSTEM",
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.textTertiary,
-                letterSpacing = 1.5.sp
+                letterSpacing = (1.5).sp
             )
         }
         
@@ -231,7 +231,7 @@ private fun StatItem(
                 text = title,
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.textTertiary,
-                letterSpacing = 0.5.sp
+                letterSpacing = (0.5).sp
             )
         }
     }
