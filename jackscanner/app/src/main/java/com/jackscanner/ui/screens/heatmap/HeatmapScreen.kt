@@ -270,5 +270,4 @@ private fun DetailItem(label: String, value: String) {
     }
 }
 
-private val Int.sp: androidx.compose.ui.unit.TextUnit
     get() = androidx.compose.ui.unit.TextUnit(this.toFloat(), androidx.compose.ui.unit.TextUnitType.Sp)
