@@ -287,3 +287,10 @@ private fun DetailItem(label: String, value: String) {
             style = MaterialTheme.typography.labelSmall,
             color = colors.textTertiary
         )
+    }
+}
+
+private fun formatTime(timestamp: Long): String {
+    val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
+    return sdf.format(Date(timestamp))
+}
