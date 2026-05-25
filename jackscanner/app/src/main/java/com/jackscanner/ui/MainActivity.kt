@@ -9,17 +9,38 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.jackscanner.R
-import com.jackscanner.databinding.ActivityMainBinding
+import com.jackscanner.data.preferences.PreferencesManager
+import com.jackscanner.navigation.BlueMeanieNavGraph
+import com.jackscanner.navigation.Screen
+import com.jackscanner.navigation.bottomNavItems
 import com.jackscanner.service.BleScanService
+import com.jackscanner.ui.theme.BlueMeanieTheme
+import com.jackscanner.ui.theme.getThemeColors
+import com.jackscanner.domain.model.AppTheme
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class MainActivity : AppCompatActivity() {
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
 
-    private lateinit var binding: ActivityMainBinding
-    private var isScanning = false
+    @Inject
+    lateinit var preferencesManager: PreferencesManager
 
     private val requiredPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         arrayOf(
@@ -44,7 +65,6 @@ class MainActivity : AppCompatActivity() {
             startScanning()
         } else {
             Toast.makeText(this, getString(R.string.permission_required), Toast.LENGTH_LONG).show()
-            updateUI()
         }
     }
 
@@ -55,42 +75,50 @@ class MainActivity : AppCompatActivity() {
             checkPermissionsAndScan()
         } else {
             Toast.makeText(this, getString(R.string.bluetooth_required), Toast.LENGTH_SHORT).show()
-            updateUI()
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        setupUI()
-        updateUI()
+        
+        setContent {
+            var appTheme by remember { mutableStateOf(AppTheme.BLUE_MEANIE_CLASSIC) }
+            
+            LaunchedEffect(Unit) {
+                preferencesManager.selectedTheme.collect { theme ->
+                    appTheme = theme
+                }
+            }
+            
+            BlueMeanieTheme(appTheme = appTheme) {
+                MainContent(
+                    onStartScan = { checkBluetoothState() },
+                    preferencesManager = preferencesManager
+                )
+            }
+        }
+        
+        // Handle navigation from notification
+        handleNotificationIntent()
     }
 
     override fun onResume() {
         super.onResume()
-        checkBluetoothState()
+        handleNotificationIntent()
     }
 
-    private fun setupUI() {
-        binding.btnScan.setOnClickListener {
-            if (isScanning) {
-                stopScanning()
-            } else {
-                checkBluetoothState()
+    private fun handleNotificationIntent() {
+        val navigateTo = intent.getStringExtra("navigate")
+        // Handle navigation from notification actions
+        when (navigateTo) {
+            "heatmap" -> {
+                // Will be handled in navigation
+            }
+            "feed" -> {
+                // Will be handled in navigation
             }
         }
-
-        binding.btnSettings.setOnClickListener {
-            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = android.net.Uri.fromParts("package", packageName, null)
-            })
-        }
-        
-        // Check if service is running
-        isScanning = BleScanService.isRunning
-        updateUI()
     }
 
     private fun checkBluetoothState() {
@@ -124,42 +152,90 @@ class MainActivity : AppCompatActivity() {
             action = BleScanService.ACTION_START_SCANNING
         }
         startForegroundService(intent)
-        isScanning = true
-        updateUI()
     }
 
-    private fun stopScanning() {
+    fun stopScanning() {
         val intent = Intent(this, BleScanService::class.java).apply {
             action = BleScanService.ACTION_STOP_SCANNING
         }
         startService(intent)
-        isScanning = false
-        updateUI()
     }
+}
 
-    private fun updateUI() {
-        binding.apply {
-            if (isScanning || BleScanService.isRunning) {
-                btnScan.text = getString(R.string.stop_scan)
-                statusText.text = getString(R.string.scanning_status)
-                statusText.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.status_active))
-                deviceCount.text = getString(R.string.devices_found, BleScanService.detectedCount)
-            } else {
-                btnScan.text = getString(R.string.start_scan)
-                statusText.text = getString(R.string.ready_status)
-                statusText.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.status_idle))
-                deviceCount.text = getString(R.string.devices_found, 0)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MainContent(
+    onStartScan: () -> Unit,
+    preferencesManager: PreferencesManager
+) {
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    
+    var showOnboarding by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(Unit) {
+        val onboardingCompleted = preferencesManager.onboardingCompleted.first()
+        showOnboarding = !onboardingCompleted
+    }
+    
+    LaunchedEffect(showOnboarding) {
+        if (showOnboarding) {
+            navController.navigate(Screen.Onboarding.route) {
+                popUpTo(0) { inclusive = true }
             }
         }
     }
     
-    override fun onPause() {
-        super.onPause()
-        // Keep scanning running in background
-    }
+    val startDestination = if (showOnboarding) Screen.Onboarding.route else Screen.Home.route
     
-    override fun onDestroy() {
-        super.onDestroy()
-        // Don't stop service - let it run in background
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = {
+            if (currentRoute in bottomNavItems.map { it.route }) {
+                NavigationBar(
+                    containerColor = com.jackscanner.ui.theme.BlueMeanieTheme.colors.surface,
+                    contentColor = com.jackscanner.ui.theme.BlueMeanieTheme.colors.primary
+                ) {
+                    bottomNavItems.forEach { screen ->
+                        val selected = currentRoute == screen.route
+                        NavigationBarItem(
+                            icon = { Icon(screen.icon, contentDescription = screen.title) },
+                            label = { Text(screen.title) },
+                            selected = selected,
+                            onClick = {
+                                if (currentRoute != screen.route) {
+                                    navController.navigate(screen.route) {
+                                        popUpTo(Screen.Home.route) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = com.jackscanner.ui.theme.BlueMeanieTheme.colors.primary,
+                                selectedTextColor = com.jackscanner.ui.theme.BlueMeanieTheme.colors.primary,
+                                unselectedIconColor = com.jackscanner.ui.theme.BlueMeanieTheme.colors.textTertiary,
+                                unselectedTextColor = com.jackscanner.ui.theme.BlueMeanieTheme.colors.textTertiary,
+                                indicatorColor = com.jackscanner.ui.theme.BlueMeanieTheme.colors.primary.copy(alpha = 0.2f)
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    ) { paddingValues ->
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            BlueMeanieNavGraph(
+                navController = navController,
+                startDestination = startDestination
+            )
+        }
     }
 }
