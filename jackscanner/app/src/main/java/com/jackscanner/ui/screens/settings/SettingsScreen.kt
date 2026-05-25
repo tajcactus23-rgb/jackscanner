@@ -1,47 +1,26 @@
 package com.jackscanner.ui.screens.settings
 
 import androidx.compose.foundation.background
-import com.jackscanner.ui.theme.sp
 import androidx.compose.foundation.clickable
-import com.jackscanner.ui.theme.sp
 import androidx.compose.foundation.horizontalScroll
-import com.jackscanner.ui.theme.sp
 import androidx.compose.foundation.layout.*
-import com.jackscanner.ui.theme.sp
 import androidx.compose.foundation.lazy.LazyColumn
-import com.jackscanner.ui.theme.sp
 import androidx.compose.foundation.rememberScrollState
-import com.jackscanner.ui.theme.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
-import com.jackscanner.ui.theme.sp
 import androidx.compose.material.icons.Icons
-import com.jackscanner.ui.theme.sp
 import androidx.compose.material.icons.filled.*
-import com.jackscanner.ui.theme.sp
 import androidx.compose.material3.*
-import com.jackscanner.ui.theme.sp
 import androidx.compose.runtime.*
-import com.jackscanner.ui.theme.sp
 import androidx.compose.ui.Alignment
-import com.jackscanner.ui.theme.sp
 import androidx.compose.ui.Modifier
-import com.jackscanner.ui.theme.sp
 import androidx.compose.ui.draw.clip
-import com.jackscanner.ui.theme.sp
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.jackscanner.ui.theme.sp
 import androidx.compose.ui.text.font.FontWeight
-import com.jackscanner.ui.theme.sp
 import androidx.compose.ui.unit.dp
-import com.jackscanner.ui.theme.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.jackscanner.ui.theme.sp
 import com.jackscanner.domain.model.AppTheme
-import com.jackscanner.ui.theme.sp
 import com.jackscanner.domain.model.ScanMode
-import com.jackscanner.ui.theme.sp
 import com.jackscanner.ui.components.GlassCard
-import com.jackscanner.ui.theme.sp
 import com.jackscanner.ui.theme.BlueMeanieTheme
 import com.jackscanner.ui.theme.sp
 
@@ -51,189 +30,322 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val colors = BlueMeanieTheme.colors
-    
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.background)
-            .padding(horizontal = 16.dp)
     ) {
-        // Header
-        Text(
-            text = "SETTINGS",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = colors.primary,
-            letterSpacing = 2.sp,
-            modifier = Modifier.padding(vertical = 24.dp)
-        )
-        
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(bottom = 100.dp)
+        // Header with Avatar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Scanner Section
-            item {
-                SettingsSection(title = "SCANNER") {
-                    SettingsToggle(
-                        title = "Auto-start on boot",
-                        subtitle = "Automatically start scanning when device boots",
-                        icon = Icons.Default.Power,
-                        checked = uiState.scannerSettings.autoStartOnBoot,
-                        onCheckedChange = { viewModel.toggleAutoStart() }
-                    )
-                    SettingsToggle(
-                        title = "Alert Sound",
-                        subtitle = "Play sound when device is detected",
-                        icon = Icons.Default.VolumeUp,
-                        checked = uiState.scannerSettings.alertSound,
-                        onCheckedChange = { viewModel.toggleAlertSound() }
-                    )
-                    SettingsToggle(
-                        title = "Alert Vibration",
-                        subtitle = "Vibrate when device is detected",
-                        icon = Icons.Default.Vibration,
-                        checked = uiState.scannerSettings.alertVibration,
-                        onCheckedChange = { viewModel.toggleAlertVibration() }
-                    )
-                    ScanModeSelector(
-                        selectedMode = uiState.scannerSettings.scanMode,
-                        onModeSelected = { viewModel.setScanMode(it) }
-                    )
-                }
+            // User Avatar
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(colors.primary.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = uiState.userName.take(2).uppercase(),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.primary
+                )
             }
             
-            // Theme Section
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = uiState.userName.ifEmpty { "Anonymous" },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textPrimary
+                )
+                Text(
+                    text = when {
+                        uiState.isPremium -> "Premium Member"
+                        uiState.privateMode -> "Private Mode"
+                        else -> "Free Member"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textTertiary
+                )
+            }
+            
+            IconButton(onClick = { /* Edit profile */ }) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit Profile",
+                    tint = colors.textSecondary
+                )
+            }
+        }
+
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            // Account Section
             item {
-                SettingsSection(title = "APPEARANCE") {
-                    ThemeSelector(
-                        selectedTheme = uiState.selectedTheme,
-                        onThemeSelected = { viewModel.setTheme(it) }
-                    )
-                }
+                SettingsCategoryItem(
+                    icon = Icons.Default.Person,
+                    title = "Account",
+                    subtitle = "Profile, username, privacy settings",
+                    onClick = { selectedCategory = "account" }
+                )
+            }
+            
+            // User Section  
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Face,
+                    title = "User",
+                    subtitle = "Avatar, display name, preferences",
+                    onClick = { selectedCategory = "user" }
+                )
+            }
+            
+            // Appearance / Theme Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Palette,
+                    title = "Appearance",
+                    subtitle = "Themes: ${uiState.selectedTheme.displayName}",
+                    onClick = { selectedCategory = "appearance" }
+                )
+            }
+            
+            // Scanner Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Radar,
+                    title = "Scanner",
+                    subtitle = "Scan mode, auto-start, alerts",
+                    onClick = { selectedCategory = "scanner" }
+                )
+            }
+            
+            // Language Model (LLM) Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Psychology,
+                    title = "Language Model (LLM)",
+                    subtitle = "Configure AI model settings",
+                    onClick = { selectedCategory = "llm" }
+                )
+            }
+            
+            // Condenser Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Compress,
+                    title = "Condenser",
+                    subtitle = "Data compression settings",
+                    onClick = { selectedCategory = "condenser" }
+                )
+            }
+            
+            // Verification Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Verified,
+                    title = "Verification",
+                    subtitle = "Account verification status",
+                    onClick = { selectedCategory = "verification" }
+                )
+            }
+            
+            // Agent Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.SmartToy,
+                    title = "Agent",
+                    subtitle = "AI agent configuration",
+                    onClick = { selectedCategory = "agent" }
+                )
+            }
+            
+            // API Keys Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Key,
+                    title = "API Keys",
+                    subtitle = "Manage your API keys",
+                    onClick = { selectedCategory = "api_keys" }
+                )
+            }
+            
+            // Secrets Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Lock,
+                    title = "Secrets",
+                    subtitle = "Secure storage for credentials",
+                    onClick = { selectedCategory = "secrets" }
+                )
+            }
+            
+            // MCP Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Hub,
+                    title = "MCP",
+                    subtitle = "Model Context Protocol settings",
+                    onClick = { selectedCategory = "mcp" }
+                )
+            }
+            
+            // Application Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Apps,
+                    title = "Application",
+                    subtitle = "App info, permissions, cache",
+                    onClick = { selectedCategory = "application" }
+                )
+            }
+            
+            // Billing Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.CreditCard,
+                    title = "Billing",
+                    subtitle = if (uiState.isPremium) "Premium Active" else "Free Plan",
+                    onClick = { selectedCategory = "billing" }
+                )
+            }
+            
+            // Integrations Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Link,
+                    title = "Integrations",
+                    subtitle = "Connect external services",
+                    onClick = { selectedCategory = "integrations" }
+                )
+            }
+            
+            // Skills Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Stars,
+                    title = "Skills",
+                    subtitle = "Configure AI skills and plugins",
+                    onClick = { selectedCategory = "skills" }
+                )
             }
             
             // Notifications Section
             item {
-                SettingsSection(title = "NOTIFICATIONS") {
-                    SettingsToggle(
-                        title = "Detection Notifications",
-                        subtitle = "Show notifications when devices are detected",
-                        icon = Icons.Default.Notifications,
-                        checked = uiState.notificationsEnabled,
-                        onCheckedChange = { viewModel.setNotificationsEnabled(it) }
-                    )
-                    SettingsToggle(
-                        title = "Community Notifications",
-                        subtitle = "Show alerts for community activity nearby",
-                        icon = Icons.Default.People,
-                        checked = uiState.communityNotifications,
-                        onCheckedChange = { viewModel.setCommunityNotifications(it) }
-                    )
-                }
+                SettingsCategoryItem(
+                    icon = Icons.Default.Notifications,
+                    title = "Notifications",
+                    subtitle = "Alert preferences, sounds",
+                    onClick = { selectedCategory = "notifications" }
+                )
+            }
+            
+            // Heatmap Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Map,
+                    title = "Heatmap",
+                    subtitle = "Map settings, filters, time range",
+                    onClick = { selectedCategory = "heatmap" }
+                )
+            }
+            
+            // Community Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Groups,
+                    title = "Community",
+                    subtitle = "Chat, sharing, visibility",
+                    onClick = { selectedCategory = "community" }
+                )
             }
             
             // Privacy Section
             item {
-                SettingsSection(title = "PRIVACY") {
-                    SettingsToggle(
-                        title = "Private Mode",
-                        subtitle = "Hide your username and identity from other users",
-                        icon = Icons.Default.VisibilityOff,
-                        checked = uiState.privateMode,
-                        onCheckedChange = { viewModel.setPrivateMode(it) }
-                    )
-                    SettingsToggle(
-                        title = "Location Sharing",
-                        subtitle = "Share detection locations with community",
-                        icon = Icons.Default.LocationOn,
-                        checked = uiState.locationSharing,
-                        onCheckedChange = { viewModel.setLocationSharing(it) }
-                    )
-                }
+                SettingsCategoryItem(
+                    icon = Icons.Default.Security,
+                    title = "Privacy",
+                    subtitle = "Data, location, anonymous mode",
+                    onClick = { selectedCategory = "privacy" }
+                )
+            }
+            
+            // Advanced Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Settings,
+                    title = "Advanced",
+                    subtitle = "Developer options, debugging",
+                    onClick = { selectedCategory = "advanced" }
+                )
+            }
+            
+            // Documentation Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Menu,
+                    title = "Documentation",
+                    subtitle = "Help, guides, FAQ",
+                    onClick = { selectedCategory = "documentation" }
+                )
             }
             
             // About Section
             item {
-                SettingsSection(title = "ABOUT") {
-                    GlassCard {
-                        Column {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "BlueMeanie",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.primary
-                                )
-                                if (uiState.isPremium) {
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Surface(
-                                        color = colors.statusGold.copy(alpha = 0.2f),
-                                        shape = RoundedCornerShape(4.dp)
-                                    ) {
-                                        Text(
-                                            text = "PREMIUM",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = colors.statusGold,
-                                            fontWeight = FontWeight.Bold,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Version 2.0.0",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = colors.textSecondary
-                            )
-                            Text(
-                                text = "Axon Device Scanner",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.textTertiary
-                            )
-                        }
-                    }
-                }
+                SettingsCategoryItem(
+                    icon = Icons.Default.Info,
+                    title = "About",
+                    subtitle = "Version 2.0.0 • Axon Device Scanner",
+                    onClick = { selectedCategory = "about" }
+                )
+            }
+            
+            // Logout Section
+            item {
+                SettingsCategoryItem(
+                    icon = Icons.Default.Logout,
+                    title = "Logout",
+                    subtitle = "Sign out of your account",
+                    isDestructive = true,
+                    onClick = { viewModel.logout() }
+                )
+            }
+            
+            // Spacer for bottom nav
+            item {
+                Spacer(modifier = Modifier.height(80.dp))
             }
         }
     }
 }
 
 @Composable
-private fun SettingsSection(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    val colors = BlueMeanieTheme.colors
-    
-    Column {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = colors.textTertiary,
-            letterSpacing = 1.sp,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        content()
-    }
-}
-
-@Composable
-private fun SettingsToggle(
+private fun SettingsCategoryItem(
+    icon: ImageVector,
     title: String,
     subtitle: String,
-    icon: ImageVector,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    isDestructive: Boolean = false,
+    onClick: () -> Unit
 ) {
     val colors = BlueMeanieTheme.colors
     
-    GlassCard {
+    GlassCard(
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -241,7 +353,7 @@ private fun SettingsToggle(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = colors.primary,
+                tint = if (isDestructive) colors.statusDanger else colors.primary,
                 modifier = Modifier.size(24.dp)
             )
             
@@ -252,7 +364,7 @@ private fun SettingsToggle(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
-                    color = colors.textPrimary
+                    color = if (isDestructive) colors.statusDanger else colors.textPrimary
                 )
                 Text(
                     text = subtitle,
@@ -261,140 +373,12 @@ private fun SettingsToggle(
                 )
             }
             
-            Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = colors.primary,
-                    checkedTrackColor = colors.primary.copy(alpha = 0.3f),
-                    uncheckedThumbColor = colors.textTertiary,
-                    uncheckedTrackColor = colors.surface
-                )
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = colors.textTertiary,
+                modifier = Modifier.size(20.dp)
             )
-        }
-    }
-}
-
-@Composable
-private fun ScanModeSelector(
-    selectedMode: ScanMode,
-    onModeSelected: (ScanMode) -> Unit
-) {
-    val colors = BlueMeanieTheme.colors
-    
-    GlassCard {
-        Column {
-            Text(
-                text = "Scan Mode",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = colors.textPrimary
-            )
-            Text(
-                text = when (selectedMode) {
-                    ScanMode.LOW_POWER -> "Optimized for battery life"
-                    ScanMode.BALANCED -> "Balanced performance and battery"
-                    ScanMode.LOW_LATENCY -> "Fastest detection, higher battery use"
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.textTertiary
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ScanMode.entries.forEach { mode ->
-                    val label = when (mode) {
-                        ScanMode.LOW_POWER -> "Low Power"
-                        ScanMode.BALANCED -> "Balanced"
-                        ScanMode.LOW_LATENCY -> "Low Latency"
-                    }
-                    
-                    Surface(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable { onModeSelected(mode) },
-                        color = if (selectedMode == mode) colors.primary.copy(alpha = 0.2f) else colors.surface,
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = if (selectedMode == mode) FontWeight.Bold else FontWeight.Normal,
-                            color = if (selectedMode == mode) colors.primary else colors.textSecondary,
-                            modifier = Modifier.padding(vertical = 10.dp),
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ThemeSelector(
-    selectedTheme: AppTheme,
-    onThemeSelected: (AppTheme) -> Unit
-) {
-    val colors = BlueMeanieTheme.colors
-    
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            AppTheme.entries.forEach { theme ->
-                val themeColors = com.jackscanner.ui.theme.getThemeColors(theme)
-                
-                Column(
-                    modifier = Modifier
-                        .width(80.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { onThemeSelected(theme) }
-                        .padding(8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(themeColors.primary)
-                    ) {
-                        if (selectedTheme == theme) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(colors.background.copy(alpha = 0.5f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Selected",
-                                    tint = themeColors.primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    Text(
-                        text = theme.displayName,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (selectedTheme == theme) colors.primary else colors.textTertiary,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        maxLines = 2
-                    )
-                }
-            }
         }
     }
 }
