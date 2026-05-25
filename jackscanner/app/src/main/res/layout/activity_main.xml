@@ -48,6 +48,20 @@
                 android:textSize="11sp"
                 android:textColor="#AAAAAA"
                 android:layout_marginStart="8dp" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btnSettings"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_menu_preferences"
+                android:background="@android:color/transparent"
+                android:contentDescription="Settings" />
+
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
