@@ -500,4 +500,3 @@ private fun CompleteStep(onComplete: () -> Unit) {
     }
 }
 
-    get() = androidx.compose.ui.unit.TextUnit(this.toFloat(), androidx.compose.ui.unit.TextUnitType.Sp)

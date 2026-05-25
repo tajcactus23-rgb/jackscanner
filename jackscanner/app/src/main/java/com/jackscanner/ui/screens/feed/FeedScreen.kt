@@ -243,4 +243,3 @@ private fun formatTime(timestamp: Long): String {
     return sdf.format(Date(timestamp))
 }
 
-    get() = androidx.compose.ui.unit.TextUnit(this.toFloat(), androidx.compose.ui.unit.TextUnitType.Sp)

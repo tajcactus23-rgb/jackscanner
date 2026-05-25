@@ -270,4 +270,3 @@ private fun DetailItem(label: String, value: String) {
     }
 }
 
-    get() = androidx.compose.ui.unit.TextUnit(this.toFloat(), androidx.compose.ui.unit.TextUnitType.Sp)
