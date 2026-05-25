@@ -22,6 +22,7 @@ import com.jackscanner.domain.model.AppTheme
 import com.jackscanner.domain.model.ScanMode
 import com.jackscanner.ui.components.GlassCard
 import com.jackscanner.ui.theme.BlueMeanieTheme
+import com.jackscanner.ui.theme.sp
 
 @Composable
 fun SettingsScreen(

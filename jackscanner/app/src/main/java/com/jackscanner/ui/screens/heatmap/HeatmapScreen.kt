@@ -20,6 +20,7 @@ import com.jackscanner.domain.model.CommunityDetection
 import com.jackscanner.domain.model.TimeRange
 import com.jackscanner.ui.components.GlassCard
 import com.jackscanner.ui.theme.BlueMeanieTheme
+import com.jackscanner.ui.theme.sp
 
 @Composable
 fun HeatmapScreen(
@@ -209,6 +210,8 @@ private fun ActivityLevelIndicator() {
 
 @Composable
 private fun ActivityLevelItem(label: String, color: androidx.compose.ui.graphics.Color) {
+    val colors = BlueMeanieTheme.colors
+    
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
