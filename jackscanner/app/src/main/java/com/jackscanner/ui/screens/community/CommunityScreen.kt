@@ -119,14 +119,11 @@ fun CommunityScreen(
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 items(uiState.messages) { message ->
-                ChatMessageItem(
-                    message = message,
-                    onReaction = { reaction -> viewModel.addReaction(message.id, reaction) }
-                )
-            }
-        }
-        
-                        }
+                    ChatMessageItem(
+                        message = message,
+                        onReaction = { reaction -> viewModel.addReaction(message.id, reaction) }
+                    )
+                }
             }
         }
         
