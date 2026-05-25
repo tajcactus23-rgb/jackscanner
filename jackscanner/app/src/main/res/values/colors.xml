@@ -1,34 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Deep Dark Background -->
-    <color name="background_primary">#030508</color>
-    <color name="background_secondary">#0A0F14</color>
-    <color name="background_card">#0E1419</color>
-    <color name="background_surface">#141C22</color>
+    <!-- Light Background -->
+    <color name="background_primary">#F5F4F0</color>
+    <color name="background_secondary">#EAE8E2</color>
+    <color name="background_card">#FFFFFF</color>
+    <color name="background_surface">#E5E4E0</color>
+    <color name="background_dark">#2C2C2C</color>
     
     <!-- Text Colors -->
-    <color name="text_primary">#FFFFFF</color>
-    <color name="text_secondary">#B3FFFFFF</color>
-    <color name="text_tertiary">#66FFFFFF</color>
-    <color name="text_quaternary">#40FFFFFF</color>
+    <color name="text_primary">#1A1A1A</color>
+    <color name="text_secondary">#4A4A4A</color>
+    <color name="text_tertiary">#7A7A7A</color>
+    <color name="text_quaternary">#A0A0A0</color>
     
-    <!-- Cyan Brand Colors -->
-    <color name="accent_primary">#00E5FF</color>
-    <color name="accent_secondary">#0099FF</color>
-    <color name="accent_glow">#6600E5FF</color>
-    <color name="accent_dim">#1A00E5FF</color>
+    <!-- Accent Colors -->
+    <color name="accent_primary">#2563EB</color>
+    <color name="accent_secondary">#3B82F6</color>
+    <color name="accent_light">#93C5FD</color>
+    
+    <!-- Signal Colors -->
+    <color name="signal_green">#22C55E</color>
+    <color name="signal_amber">#F59E0B</color>
+    <color name="signal_red">#EF4444</color>
+    
+    <!-- Borders -->
+    <color name="border_dim">#D4D2CC</color>
+    <color name="border_medium">#C4C2BC</color>
     
     <!-- Status Colors -->
-    <color name="status_danger">#FF2D55</color>
-    <color name="status_success">#30D158</color>
-    <color name="status_warning">#FFD60A</color>
+    <color name="status_active">#22C55E</color>
+    <color name="status_idle">#7A7A7A</color>
+    <color name="status_danger">#EF4444</color>
+    <color name="status_warning">#F59E0B</color>
     <color name="status_gold">#FFD700</color>
     <color name="status_silver">#C0C0C0</color>
     <color name="status_bronze">#CD7F32</color>
-    
-    <!-- Borders -->
-    <color name="border_dim">#2600E5FF</color>
-    <color name="border_medium">#4000E5FF</color>
     
     <!-- Standard -->
     <color name="black">#000000</color>
