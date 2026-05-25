@@ -1,6 +1,7 @@
 package com.jackscanner.ui.screens.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -147,9 +148,9 @@ fun DetectionDetailScreen(
                             )
                             Icon(
                                 imageVector = if (expanded) 
-                                    Icons.Default.KeyboardArrowUp 
+                                    Icons.Default.ArrowDropUp 
                                 else 
-                                    Icons.Default.KeyboardArrowDown,
+                                    Icons.Default.ArrowDropDown,
                                 contentDescription = "Expand",
                                 tint = colors.textTertiary
                             )

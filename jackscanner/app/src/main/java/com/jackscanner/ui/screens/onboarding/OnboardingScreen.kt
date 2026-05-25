@@ -40,7 +40,7 @@ fun OnboardingScreen(
         Spacer(modifier = Modifier.height(48.dp))
         
         LinearProgressIndicator(
-            progress = { 0.5f },
+            progress = 0.5f,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(4.dp)
