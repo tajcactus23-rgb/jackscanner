@@ -1,43 +1,24 @@
 package com.jackscanner.ui.screens.scoreboard
 
 import androidx.compose.foundation.background
-import com.jackscanner.ui.theme.sp
 import androidx.compose.foundation.layout.*
-import com.jackscanner.ui.theme.sp
 import androidx.compose.foundation.lazy.LazyColumn
-import com.jackscanner.ui.theme.sp
 import androidx.compose.foundation.lazy.itemsIndexed
-import com.jackscanner.ui.theme.sp
 import androidx.compose.foundation.shape.CircleShape
-import com.jackscanner.ui.theme.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
-import com.jackscanner.ui.theme.sp
 import androidx.compose.material.icons.Icons
-import com.jackscanner.ui.theme.sp
 import androidx.compose.material.icons.filled.EmojiEvents
-import com.jackscanner.ui.theme.sp
 import androidx.compose.material3.*
-import com.jackscanner.ui.theme.sp
 import androidx.compose.runtime.*
-import com.jackscanner.ui.theme.sp
 import androidx.compose.ui.Alignment
-import com.jackscanner.ui.theme.sp
 import androidx.compose.ui.Modifier
-import com.jackscanner.ui.theme.sp
 import androidx.compose.ui.draw.clip
-import com.jackscanner.ui.theme.sp
 import androidx.compose.ui.text.font.FontWeight
-import com.jackscanner.ui.theme.sp
 import androidx.compose.ui.unit.dp
-import com.jackscanner.ui.theme.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.jackscanner.ui.theme.sp
 import com.jackscanner.domain.model.UserRank
-import com.jackscanner.ui.theme.sp
 import com.jackscanner.ui.components.GlassCard
-import com.jackscanner.ui.theme.sp
 import com.jackscanner.ui.theme.BlueMeanieTheme
-import com.jackscanner.ui.theme.sp
 
 @Composable
 fun ScoreboardScreen(
@@ -334,3 +315,5 @@ private fun getRankColor(rank: UserRank) = when (rank) {
     UserRank.LEGEND -> BlueMeanieTheme.colors.statusGold
 }
 
+private val Int.sp: androidx.compose.ui.unit.TextUnit
+    get() = androidx.compose.ui.unit.TextUnit(this.toFloat(), androidx.compose.ui.unit.TextUnitType.Sp)
