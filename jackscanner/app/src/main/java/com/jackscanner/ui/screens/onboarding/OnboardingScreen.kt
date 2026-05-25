@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jackscanner.ui.components.GlassCard
 import com.jackscanner.ui.theme.BlueMeanieTheme
@@ -40,7 +41,7 @@ fun OnboardingScreen(
         Spacer(modifier = Modifier.height(48.dp))
         
         LinearProgressIndicator(
-            progress = { if (uiState.totalSteps > 0) (uiState.currentStep + 1).toFloat() / uiState.totalSteps else 0f },
+            progress = { 0.5f },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(4.dp)

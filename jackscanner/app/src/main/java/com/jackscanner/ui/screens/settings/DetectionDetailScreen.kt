@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jackscanner.ui.components.DetectionNotice
 import com.jackscanner.ui.components.GlassCard
@@ -147,9 +148,9 @@ fun DetectionDetailScreen(
                             )
                             Icon(
                                 imageVector = if (expanded) 
-                                    Icons.Default.ExpandLess 
+                                    Icons.Default.KeyboardArrowUp 
                                 else 
-                                    Icons.Default.ExpandMore,
+                                    Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Expand",
                                 tint = colors.textTertiary
                             )
@@ -220,14 +221,3 @@ private fun formatDateTime(timestamp: Long): String {
     val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm:ss", Locale.getDefault())
     return sdf.format(Date(timestamp))
 }
-
-private fun androidx.compose.ui.unit.dp.clickable(onClick: () -> Unit): androidx.compose.ui.Modifier {
-    return this.then(androidx.compose.ui.Modifier.clickable(onClick = onClick))
-}
-
-private val androidx.compose.foundation.shape.RoundedCornerShape = androidx.compose.foundation.shape.RoundedCornerShape
-
-private val androidx.compose.ui.Modifier.padding: (vertical: androidx.compose.ui.unit.Dp) -> androidx.compose.ui.Modifier
-    get() = { vertical ->
-        this.padding(vertical = vertical)
-    }
