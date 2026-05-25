@@ -12,7 +12,7 @@ data class OnboardingUiState(
     val currentStep: Int = 0,
     val totalSteps: Int = 7,
     val username: String = "",
-    val isAnonymous: Boolean = true,
+    val isAnonymous: Boolean = false,
     val autoRotateUsername: Boolean = false,
     val optionalLocation: Boolean = false,
     val permissionsGranted: PermissionsState = PermissionsState()
