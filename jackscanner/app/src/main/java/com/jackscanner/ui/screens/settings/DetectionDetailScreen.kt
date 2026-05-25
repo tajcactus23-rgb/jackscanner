@@ -17,7 +17,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.jackscanner.ui.components.DetectionNotice
 import com.jackscanner.ui.components.GlassCard
 import com.jackscanner.ui.theme.BlueMeanieTheme
-import com.jackscanner.ui.theme.sp
 import java.text.SimpleDateFormat
 import java.util.*
 
