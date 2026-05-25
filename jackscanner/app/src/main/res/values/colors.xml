@@ -17,6 +17,7 @@
     <color name="accent_primary">#2563EB</color>
     <color name="accent_secondary">#3B82F6</color>
     <color name="accent_light">#93C5FD</color>
+    <color name="accent_glow">#60A5FA</color>
     
     <!-- Signal Colors -->
     <color name="signal_green">#22C55E</color>
