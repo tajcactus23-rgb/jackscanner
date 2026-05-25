@@ -88,17 +88,45 @@ fun CommunityScreen(
             }
         }
         
-        // Chat Messages
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(vertical = 8.dp)
-        ) {
-            items(uiState.messages) { message ->
+        // Chat Messages or Empty State
+        if (uiState.messages.isEmpty()) {
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "💬",
+                        style = MaterialTheme.typography.displayLarge
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "No Messages Yet",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = colors.textSecondary
+                    )
+                    Text(
+                        text = "Start a conversation with the community",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.textTertiary
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(vertical = 8.dp)
+            ) {
+                items(uiState.messages) { message ->
                 ChatMessageItem(
                     message = message,
                     onReaction = { reaction -> viewModel.addReaction(message.id, reaction) }
                 )
+            }
+        }
+        
+                        }
             }
         }
         

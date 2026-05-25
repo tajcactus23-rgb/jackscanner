@@ -47,19 +47,25 @@ class ScoreboardViewModel @Inject constructor(
     }
     
     private fun loadLeaderboard() {
-        // Sample leaderboard data
-        val sampleLeaderboard = listOf(
-            LeaderboardEntry(1, "ScannerPro", 1250, 5200, UserRank.LEGEND, false),
-            LeaderboardEntry(2, "Anonymous", 890, 3400, UserRank.ELITE, true),
-            LeaderboardEntry(3, "AxonHunter", 720, 2800, UserRank.ELITE, false),
-            LeaderboardEntry(4, "Anonymous", 550, 1900, UserRank.VETERAN, true),
-            LeaderboardEntry(5, "BlueScout", 420, 1500, UserRank.VETERAN, false),
-            LeaderboardEntry(6, "Anonymous", 380, 1200, UserRank.ANALYST, true),
-            LeaderboardEntry(7, "DetectorX", 290, 950, UserRank.ANALYST, false),
-            LeaderboardEntry(8, "Anonymous", 220, 750, UserRank.TRACKER, true),
-            LeaderboardEntry(9, "ScannerOne", 180, 600, UserRank.TRACKER, false),
-            LeaderboardEntry(10, "Anonymous", 150, 450, UserRank.SCOUT, true)
-        )
-        _uiState.update { it.copy(leaderboard = sampleLeaderboard) }
+        // Load real leaderboard data from user profile
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            userRepository.getUserProfile().collect { profile ->
+                if (profile != null) {
+                    // Build leaderboard with actual user data
+                    val userEntry = LeaderboardEntry(
+                        rank = 0,
+                        username = profile.username,
+                        detectionCount = profile.detectionCount,
+                        reputationScore = profile.reputationScore,
+                        userRank = profile.rank,
+                        isAnonymous = profile.isAnonymous
+                    )
+                    _uiState.update { it.copy(leaderboard = listOf(userEntry), isLoading = false) }
+                } else {
+                    _uiState.update { it.copy(leaderboard = emptyList(), isLoading = false) }
+                }
+            }
+        }
     }
 }

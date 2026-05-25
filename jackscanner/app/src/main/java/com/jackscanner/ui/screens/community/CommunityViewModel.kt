@@ -48,31 +48,8 @@ class CommunityViewModel @Inject constructor(
     }
     
     private fun loadMessages() {
-        // Load sample messages for demonstration
-        val sampleMessages = listOf(
-            ChatMessage(
-                id = UUID.randomUUID().toString(),
-                username = "Anonymous",
-                message = "Just detected an Axon device in the downtown area!",
-                timestamp = System.currentTimeMillis() - 300000,
-                isAnonymous = true
-            ),
-            ChatMessage(
-                id = UUID.randomUUID().toString(),
-                username = "Anonymous",
-                message = "Scanner is working great. Detection radius seems solid.",
-                timestamp = System.currentTimeMillis() - 600000,
-                isAnonymous = true
-            ),
-            ChatMessage(
-                id = UUID.randomUUID().toString(),
-                username = "Anonymous",
-                message = "First detection today! 🔍",
-                timestamp = System.currentTimeMillis() - 1200000,
-                isAnonymous = true
-            )
-        )
-        _uiState.update { it.copy(messages = sampleMessages) }
+        // Start with empty messages - only user-generated messages will appear
+        _uiState.update { it.copy(messages = emptyList()) }
     }
     
     private fun createDefaultProfile(): UserProfile {
