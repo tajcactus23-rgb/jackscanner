@@ -24,9 +24,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.jackscanner.R
 import com.jackscanner.data.preferences.PreferencesManager
-import com.jackscanner.navigation.BlueMeanieNavGraph
-import com.jackscanner.navigation.Screen
-import com.jackscanner.navigation.bottomNavItems
+import com.jackscanner.ui.navigation.BlueMeanieNavGraph
+import com.jackscanner.ui.navigation.Screen
+import com.jackscanner.ui.navigation.bottomNavItems
 import com.jackscanner.service.BleScanService
 import com.jackscanner.ui.theme.BlueMeanieTheme
 import com.jackscanner.ui.theme.getThemeColors
