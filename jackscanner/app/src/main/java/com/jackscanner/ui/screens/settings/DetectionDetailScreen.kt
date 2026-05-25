@@ -115,11 +115,11 @@ fun DetectionDetailScreen(
                 GlassCard {
                     Column {
                         DetailRow("IDENTIFIER", detection.macAddress)
-                        HorizontalDivider(color = colors.border, modifier = Modifier.padding(vertical = 12.dp))
+                        Divider(color = colors.border, modifier = Modifier.padding(vertical = 12.dp))
                         DetailRow("FIRST SEEN", formatDateTime(detection.firstSeen))
-                        HorizontalDivider(color = colors.border, modifier = Modifier.padding(vertical = 12.dp))
+                        Divider(color = colors.border, modifier = Modifier.padding(vertical = 12.dp))
                         DetailRow("LAST SEEN", formatDateTime(detection.lastSeen))
-                        HorizontalDivider(color = colors.border, modifier = Modifier.padding(vertical = 12.dp))
+                        Divider(color = colors.border, modifier = Modifier.padding(vertical = 12.dp))
                         DetailRow("OBSERVED SIGNALS", detection.observedSignals.toString())
                     }
                 }
@@ -147,9 +147,9 @@ fun DetectionDetailScreen(
                             )
                             Icon(
                                 imageVector = if (expanded) 
-                                    Icons.Default.KeyboardArrowUp 
+                                    Icons.Default.ExpandLess 
                                 else 
-                                    Icons.Default.KeyboardArrowDown,
+                                    Icons.Default.ExpandMore,
                                 contentDescription = "Expand",
                                 tint = colors.textTertiary
                             )
@@ -159,18 +159,18 @@ fun DetectionDetailScreen(
                             Spacer(modifier = Modifier.height(16.dp))
                             
                             DetailRow("MAC ADDRESS", detection.macAddress)
-                            HorizontalDivider(color = colors.border, modifier = Modifier.padding(vertical = 12.dp))
+                            Divider(color = colors.border, modifier = Modifier.padding(vertical = 12.dp))
                             DetailRow("RSSI", "${detection.rssi} dBm")
                             detection.manufacturerData?.let {
-                                HorizontalDivider(color = colors.border, modifier = Modifier.padding(vertical = 12.dp))
+                                Divider(color = colors.border, modifier = Modifier.padding(vertical = 12.dp))
                                 DetailRow("MANUFACTURER DATA", it)
                             }
                             detection.advertisementData?.let {
-                                HorizontalDivider(color = colors.border, modifier = Modifier.padding(vertical = 12.dp))
+                                Divider(color = colors.border, modifier = Modifier.padding(vertical = 12.dp))
                                 DetailRow("ADVERTISEMENT DATA", it)
                             }
                             if (detection.serviceUuids.isNotEmpty()) {
-                                HorizontalDivider(color = colors.border, modifier = Modifier.padding(vertical = 12.dp))
+                                Divider(color = colors.border, modifier = Modifier.padding(vertical = 12.dp))
                                 DetailRow("SERVICE UUIDs", detection.serviceUuids.joinToString(", "))
                             }
                         }

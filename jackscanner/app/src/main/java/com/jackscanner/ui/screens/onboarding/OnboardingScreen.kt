@@ -40,7 +40,7 @@ fun OnboardingScreen(
         Spacer(modifier = Modifier.height(48.dp))
         
         LinearProgressIndicator(
-            progress = { (uiState.currentStep + 1).toFloat() / uiState.totalSteps },
+            progress = { if (uiState.totalSteps > 0) (uiState.currentStep + 1).toFloat() / uiState.totalSteps else 0f },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(4.dp)
@@ -189,7 +189,7 @@ private fun WelcomeStep(onNext: () -> Unit) {
             style = MaterialTheme.typography.bodyLarge,
             color = colors.textSecondary,
             textAlign = TextAlign.Center,
-            lineHeight = 28.dp
+            lineHeight = 28.sp
         )
         
         Spacer(modifier = Modifier.height(48.dp))
