@@ -7,6 +7,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -148,9 +150,9 @@ fun DetectionDetailScreen(
                             )
                             Icon(
                                 imageVector = if (expanded) 
-                                    Icons.Default.ArrowDropUp 
+                                    if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore 
                                 else 
-                                    Icons.Default.ArrowDropDown,
+                                    if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                                 contentDescription = "Expand",
                                 tint = colors.textTertiary
                             )

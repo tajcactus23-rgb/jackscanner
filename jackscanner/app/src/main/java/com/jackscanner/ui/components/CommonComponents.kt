@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jackscanner.ui.theme.BlueMeanieTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
@@ -72,6 +73,7 @@ fun GlassCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HeroGlassCard(
     modifier: Modifier = Modifier,
