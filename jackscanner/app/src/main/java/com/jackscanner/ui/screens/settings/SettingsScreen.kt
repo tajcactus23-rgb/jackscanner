@@ -17,12 +17,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jackscanner.domain.model.AppTheme
 import com.jackscanner.domain.model.ScanMode
 import com.jackscanner.ui.components.GlassCard
 import com.jackscanner.ui.theme.BlueMeanieTheme
-import com.jackscanner.ui.theme.sp
 
 @Composable
 fun SettingsScreen(

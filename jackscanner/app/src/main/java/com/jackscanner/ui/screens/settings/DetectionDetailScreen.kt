@@ -149,10 +149,7 @@ fun DetectionDetailScreen(
                                 letterSpacing = 1.sp
                             )
                             Icon(
-                                imageVector = if (expanded) 
-                                    if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore 
-                                else 
-                                    if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                                imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                                 contentDescription = "Expand",
                                 tint = colors.textTertiary
                             )
