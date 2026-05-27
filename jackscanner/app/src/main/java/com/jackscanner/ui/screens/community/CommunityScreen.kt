@@ -1,5 +1,9 @@
 package com.jackscanner.ui.screens.community
 
+import androidx.compose.animation.core.*
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -242,78 +246,150 @@ private fun ProfileStat(label: String, value: String) {
 @Composable
 private fun ChatMessageItem(
     message: ChatMessage,
-    onReaction: (String) -> Unit
+    onReaction: (String) -> Unit,
+    showDevBadge: Boolean = false,
+    showColoredUsername: Boolean = false,
+    showChatBorder: Boolean = false
 ) {
     val colors = BlueMeanieTheme.colors
+    val isDevMessage = message.isDevMessage
     
-    GlassCard {
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Avatar
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(colors.primary.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (message.isAnonymous) "?" else message.username.firstOrNull()?.uppercase() ?: "?",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = colors.primary,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                Column(modifier = Modifier.weight(1f)) {
-                    Row {
-                        Text(
-                            text = if (message.isAnonymous) "Anonymous" else message.username,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.textPrimary
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = formatTime(message.timestamp),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = colors.textTertiary
+    Box(modifier = Modifier.fillMaxWidth()) {
+        // Golden border for dev messages
+        if (showChatBorder && isDevMessage) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(2.dp)
+                    .drawBehind {
+                        drawRoundRect(
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    Color(0xFFFFD700),
+                                    Color(0xFFFF8C00),
+                                    Color(0xFFFFD700)
+                                )
+                            ),
+                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(22.dp.toPx(), 22.dp.toPx())
                         )
                     }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = message.message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.textPrimary
             )
-            
-            // Reactions
-            if (message.reactions.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    message.reactions.forEach { (emoji, count) ->
-                        Surface(
-                            modifier = Modifier.clickable { onReaction(emoji) },
-                            color = colors.primary.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
+        }
+        
+        GlassCard {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Avatar with golden glow for dev
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isDevMessage) Color(0xFFFFD700).copy(alpha = 0.3f)
+                                else colors.primary.copy(alpha = 0.2f)
+                            )
+                            .then(
+                                if (showDevBadge && isDevMessage) {
+                                    Modifier.drawBehind {
+                                        drawCircle(
+                                            brush = Brush.linearGradient(
+                                                colors = listOf(Color(0xFFFFD700), Color(0xFFFF8C00))
+                                            )
+                                        )
+                                    }
+                                } else Modifier
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (message.isAnonymous) "?" else message.username.firstOrNull()?.uppercase() ?: "?",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (isDevMessage) Color(0xFFFFD700) else colors.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // Username with optional gradient
+                            if (showColoredUsername && isDevMessage) {
+                                GradientUsername(username = message.username, enabled = true)
+                            } else {
+                                Text(
+                                    text = if (message.isAnonymous) "Anonymous" else message.username,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.textPrimary
+                                )
+                            }
+                            
+                            // Dev Badge
+                            if (showDevBadge && isDevMessage) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(4.dp),
+                                    color = Color(0xFFFFD700).copy(alpha = 0.2f)
+                                ) {
+                                    Text(
+                                        text = "DEV",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            fontSize = 8.sp,
+                                            fontWeight = FontWeight.Bold
+                                        ),
+                                        color = Color(0xFFFFD700),
+                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                    )
+                                }
+                            }
+                            
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "$emoji $count",
-                                style = MaterialTheme.typography.labelMedium,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                text = formatTime(message.timestamp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.textTertiary
                             )
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = message.message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.textPrimary
+                )
+
+                // Reactions with dev styling
+                if (message.reactions.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        message.reactions.forEach { (emoji, count) ->
+                            Surface(
+                                modifier = Modifier.clickable { onReaction(emoji) },
+                                color = if (isDevMessage) Color(0xFFFFD700).copy(alpha = 0.2f)
+                                        else colors.primary.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    text = "$emoji $count",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (isDevMessage) Color(0xFFFFD700) else colors.textPrimary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
             }
         }
     }

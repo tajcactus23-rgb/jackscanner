@@ -26,6 +26,7 @@ import com.jackscanner.ui.theme.BlueMeanieTheme
 
 @Composable
 fun SettingsScreen(
+    onDevAccess: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -179,6 +180,11 @@ fun SettingsScreen(
                 }
             }
         }
+
+            // Secret dev access (tap version 5 times)
+            item {
+                SecretDevAccess(onDevAccess = onDevAccess)
+            }
     }
 }
 
@@ -376,4 +382,35 @@ private fun ThemeSelector(
             }
         }
     }
+}
+// Secret dev access - tap version 5 times to open dev settings
+@Composable
+private fun SecretDevAccess(
+    onDevAccess: () -> Unit
+) {
+    var tapCount by remember { mutableStateOf(0) }
+    var lastTapTime by remember { mutableStateOf(0L) }
+    
+    LaunchedEffect(tapCount) {
+        if (tapCount >= 5) {
+            onDevAccess()
+            tapCount = 0
+        }
+    }
+    
+    // Invisible clickable area over the version text
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(24.dp)
+            .clickable {
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastTapTime < 500) {
+                    tapCount++
+                } else {
+                    tapCount = 1
+                }
+                lastTapTime = currentTime
+            }
+    )
 }

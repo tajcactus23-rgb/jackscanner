@@ -61,6 +61,22 @@ class PreferencesManager @Inject constructor(
         // Community
         val COMMUNITY_ENABLED = booleanPreferencesKey("community_enabled")
         val SHOW_PROFILE = booleanPreferencesKey("show_profile")
+
+        // Dev Features (only dev can control these)
+        val IS_DEV_ACCOUNT = booleanPreferencesKey("is_dev_account")
+        val DEV_BADGE_ENABLED = booleanPreferencesKey("dev_badge_enabled")
+        val COLORED_USERNAMES_ENABLED = booleanPreferencesKey("colored_usernames_enabled")
+        val CHAT_BOUNDARIES_ENABLED = booleanPreferencesKey("chat_boundaries_enabled")
+        val SPECIAL_FONTS_ENABLED = booleanPreferencesKey("special_fonts_enabled")
+        
+        // Dev Feature Flags - Control what's available for all users
+        val FLAG_HEATMAP_ENABLED = booleanPreferencesKey("flag_heatmap_enabled")
+        val FLAG_COMMUNITY_ENABLED = booleanPreferencesKey("flag_community_enabled")
+        val FLAG_SCOREBOARD_ENABLED = booleanPreferencesKey("flag_scoreboard_enabled")
+        val FLAG_LEADERBOARD_GLOBAL = booleanPreferencesKey("flag_leaderboard_global")
+        val FLAG_DETECTION_ALERTS = booleanPreferencesKey("flag_detection_alerts")
+        val FLAG_LOCATION_TRACKING = booleanPreferencesKey("flag_location_tracking")
+        val FLAG_PREMIUM_FEATURES = booleanPreferencesKey("flag_premium_features")
     }
 
     // Onboarding State
@@ -206,6 +222,142 @@ class PreferencesManager @Inject constructor(
     suspend fun setCommunityEnabled(enabled: Boolean) {
         dataStore.edit { prefs ->
             prefs[PreferenceKeys.COMMUNITY_ENABLED] = enabled
+        }
+    }
+
+    // ========== DEV FEATURES (Only dev can control these) ==========
+    
+    // Dev Account Status
+    val isDevAccount: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[PreferenceKeys.IS_DEV_ACCOUNT] ?: false
+    }
+
+    suspend fun setDevAccount(isDev: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[PreferenceKeys.IS_DEV_ACCOUNT] = isDev
+        }
+    }
+
+    // Dev Badge Feature
+    val devBadgeEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[PreferenceKeys.DEV_BADGE_ENABLED] ?: true
+    }
+
+    suspend fun setDevBadgeEnabled(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[PreferenceKeys.DEV_BADGE_ENABLED] = enabled
+        }
+    }
+
+    // Colored Usernames Feature
+    val coloredUsernamesEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[PreferenceKeys.COLORED_USERNAMES_ENABLED] ?: true
+    }
+
+    suspend fun setColoredUsernamesEnabled(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[PreferenceKeys.COLORED_USERNAMES_ENABLED] = enabled
+        }
+    }
+
+    // Chat Boundaries Feature
+    val chatBoundariesEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[PreferenceKeys.CHAT_BOUNDARIES_ENABLED] ?: true
+    }
+
+    suspend fun setChatBoundariesEnabled(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[PreferenceKeys.CHAT_BOUNDARIES_ENABLED] = enabled
+        }
+    }
+
+    // Special Fonts Feature
+    val specialFontsEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[PreferenceKeys.SPECIAL_FONTS_ENABLED] ?: true
+    }
+
+    suspend fun setSpecialFontsEnabled(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[PreferenceKeys.SPECIAL_FONTS_ENABLED] = enabled
+        }
+    }
+
+    // ========== DEV FEATURE FLAGS (Control what's available for all users) ==========
+    
+    // Heatmap Feature Flag
+    val flagHeatmapEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[PreferenceKeys.FLAG_HEATMAP_ENABLED] ?: true
+    }
+
+    suspend fun setFlagHeatmapEnabled(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[PreferenceKeys.FLAG_HEATMAP_ENABLED] = enabled
+        }
+    }
+
+    // Community Feature Flag
+    val flagCommunityEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[PreferenceKeys.FLAG_COMMUNITY_ENABLED] ?: true
+    }
+
+    suspend fun setFlagCommunityEnabled(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[PreferenceKeys.FLAG_COMMUNITY_ENABLED] = enabled
+        }
+    }
+
+    // Scoreboard Feature Flag
+    val flagScoreboardEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[PreferenceKeys.FLAG_SCOREBOARD_ENABLED] ?: true
+    }
+
+    suspend fun setFlagScoreboardEnabled(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[PreferenceKeys.FLAG_SCOREBOARD_ENABLED] = enabled
+        }
+    }
+
+    // Global Leaderboard Feature Flag
+    val flagLeaderboardGlobal: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[PreferenceKeys.FLAG_LEADERBOARD_GLOBAL] ?: false
+    }
+
+    suspend fun setFlagLeaderboardGlobal(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[PreferenceKeys.FLAG_LEADERBOARD_GLOBAL] = enabled
+        }
+    }
+
+    // Detection Alerts Feature Flag
+    val flagDetectionAlerts: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[PreferenceKeys.FLAG_DETECTION_ALERTS] ?: true
+    }
+
+    suspend fun setFlagDetectionAlerts(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[PreferenceKeys.FLAG_DETECTION_ALERTS] = enabled
+        }
+    }
+
+    // Location Tracking Feature Flag
+    val flagLocationTracking: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[PreferenceKeys.FLAG_LOCATION_TRACKING] ?: false
+    }
+
+    suspend fun setFlagLocationTracking(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[PreferenceKeys.FLAG_LOCATION_TRACKING] = enabled
+        }
+    }
+
+    // Premium Features Feature Flag
+    val flagPremiumFeatures: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[PreferenceKeys.FLAG_PREMIUM_FEATURES] ?: false
+    }
+
+    suspend fun setFlagPremiumFeatures(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[PreferenceKeys.FLAG_PREMIUM_FEATURES] = enabled
         }
     }
 }

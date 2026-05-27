@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.jackscanner.ui.screens.community.CommunityScreen
+import com.jackscanner.ui.screens.dev.DevSettingsScreen
 import com.jackscanner.ui.screens.feed.FeedScreen
 import com.jackscanner.ui.screens.heatmap.HeatmapScreen
 import com.jackscanner.ui.screens.home.HomeScreen
@@ -28,7 +29,7 @@ fun BlueMeanieNavGraph(
         navController = navController,
         startDestination = startDestination,
         enterTransition = {
-            fadeIn(animationSpec = tween(300)) + 
+            fadeIn(animationSpec = tween(300)) +
             slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(300))
         },
         exitTransition = {
@@ -53,7 +54,7 @@ fun BlueMeanieNavGraph(
                 }
             )
         }
-        
+
         composable(Screen.Home.route) {
             HomeScreen(
                 onDetectionClick = { detectionId ->
@@ -61,7 +62,7 @@ fun BlueMeanieNavGraph(
                 }
             )
         }
-        
+
         composable(Screen.Feed.route) {
             FeedScreen(
                 onDetectionClick = { detectionId ->
@@ -69,23 +70,27 @@ fun BlueMeanieNavGraph(
                 }
             )
         }
-        
+
         composable(Screen.Heatmap.route) {
             HeatmapScreen()
         }
-        
+
         composable(Screen.Community.route) {
             CommunityScreen()
         }
-        
+
         composable(Screen.Scoreboard.route) {
             ScoreboardScreen()
         }
-        
+
         composable(Screen.Settings.route) {
-            SettingsScreen()
+            SettingsScreen(
+                onDevAccess = {
+                    navController.navigate(Screen.DevSettings.route)
+                }
+            )
         }
-        
+
         composable(
             route = Screen.DetectionDetail.route,
             arguments = listOf(
@@ -95,6 +100,13 @@ fun BlueMeanieNavGraph(
             val detectionId = backStackEntry.arguments?.getString("detectionId") ?: ""
             DetectionDetailScreen(
                 detectionId = detectionId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        
+        // Dev Settings Screen (hidden, accessed via tap version 5 times)
+        composable(Screen.DevSettings.route) {
+            DevSettingsScreen(
                 onBack = { navController.popBackStack() }
             )
         }

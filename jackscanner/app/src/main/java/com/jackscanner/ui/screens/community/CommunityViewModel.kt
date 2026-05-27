@@ -2,6 +2,7 @@ package com.jackscanner.ui.screens.community
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jackscanner.data.preferences.PreferencesManager
 import com.jackscanner.domain.model.UserProfile
 import com.jackscanner.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +15,13 @@ data class CommunityUiState(
     val userProfile: UserProfile? = null,
     val messages: List<ChatMessage> = emptyList(),
     val isLoading: Boolean = false,
-    val showProfileCard: Boolean = false
+    val showProfileCard: Boolean = false,
+    // Dev features
+    val isDevAccount: Boolean = false,
+    val devBadgeEnabled: Boolean = true,
+    val coloredUsernamesEnabled: Boolean = true,
+    val chatBoundariesEnabled: Boolean = true,
+    val specialFontsEnabled: Boolean = true,
 )
 
 data class ChatMessage(
@@ -23,22 +30,47 @@ data class ChatMessage(
     val message: String,
     val timestamp: Long,
     val isAnonymous: Boolean,
-    val reactions: Map<String, Int> = emptyMap()
+    val reactions: Map<String, Int> = emptyMap(),
+    val isDevMessage: Boolean = false
 )
 
 @HiltViewModel
 class CommunityViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
-    
+
     private val _uiState = MutableStateFlow(CommunityUiState())
     val uiState: StateFlow<CommunityUiState> = _uiState.asStateFlow()
-    
+
     init {
         loadUserProfile()
         loadMessages()
+        observeDevSettings()
     }
-    
+
+    private fun observeDevSettings() {
+        viewModelScope.launch {
+            combine(
+                preferencesManager.isDevAccount,
+                preferencesManager.devBadgeEnabled,
+                preferencesManager.coloredUsernamesEnabled,
+                preferencesManager.chatBoundariesEnabled,
+                preferencesManager.specialFontsEnabled
+            ) { isDev, badge, colored, boundaries, fonts ->
+                _uiState.update {
+                    it.copy(
+                        isDevAccount = isDev,
+                        devBadgeEnabled = badge,
+                        coloredUsernamesEnabled = colored,
+                        chatBoundariesEnabled = boundaries,
+                        specialFontsEnabled = fonts
+                    )
+                }
+            }.collect()
+        }
+    }
+
     private fun loadUserProfile() {
         viewModelScope.launch {
             userRepository.getUserProfile().collect { profile ->
@@ -46,12 +78,11 @@ class CommunityViewModel @Inject constructor(
             }
         }
     }
-    
+
     private fun loadMessages() {
-        // Start with empty messages - only user-generated messages will appear
         _uiState.update { it.copy(messages = emptyList()) }
     }
-    
+
     private fun createDefaultProfile(): UserProfile {
         return UserProfile(
             username = "Anonymous",
@@ -62,25 +93,27 @@ class CommunityViewModel @Inject constructor(
             isAnonymous = true
         )
     }
-    
+
     fun toggleProfileCard() {
         _uiState.update { it.copy(showProfileCard = !it.showProfileCard) }
     }
-    
+
     fun sendMessage(message: String) {
+        val state = _uiState.value
         val newMessage = ChatMessage(
             id = UUID.randomUUID().toString(),
-            username = _uiState.value.userProfile?.username ?: "Anonymous",
+            username = state.userProfile?.username ?: "Anonymous",
             message = message,
             timestamp = System.currentTimeMillis(),
-            isAnonymous = _uiState.value.userProfile?.isAnonymous ?: true
+            isAnonymous = state.userProfile?.isAnonymous ?: true,
+            isDevMessage = state.isDevAccount
         )
-        
-        _uiState.update { state ->
-            state.copy(messages = state.messages + newMessage)
+
+        _uiState.update { currentState ->
+            currentState.copy(messages = currentState.messages + newMessage)
         }
     }
-    
+
     fun addReaction(messageId: String, reaction: String) {
         _uiState.update { state ->
             val updatedMessages = state.messages.map { msg ->
