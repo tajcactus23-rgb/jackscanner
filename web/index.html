@@ -3,1333 +3,755 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BlueMeanie - Axon Radar</title>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <title>JackScanner - Field Operations</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
-        
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         :root {
-            --bg-deep: #030508;
-            --bg-dark: #0a0f14;
-            --bg-card: #0e1419;
-            --primary: #00e5ff;
-            --accent: #0099ff;
-            --danger: #ff2d55;
-            --success: #30d158;
-            --warning: #ffcc00;
-            --gold: #ffd700;
-            --silver: #c0c0c0;
-            --bronze: #cd7f32;
-            --text: #ffffff;
-            --text-dim: rgba(255,255,255,0.6);
-            --text-fade: rgba(255,255,255,0.35);
-            --border: rgba(0,229,255,0.15);
-            --glow: rgba(0,229,255,0.4);
+            --bg-primary: #f5f4f0;
+            --bg-secondary: #eae8e2;
+            --bg-card: #ffffff;
+            --bg-dark: #2c2c2c;
+            --text-primary: #1a1a1a;
+            --text-secondary: #4a4a4a;
+            --text-muted: #7a7a7a;
+            --accent: #2563eb;
+            --accent-light: #3b82f6;
+            --signal-green: #22c55e;
+            --signal-amber: #f59e0b;
+            --signal-red: #ef4444;
+            --border: #d4d2cc;
+            --shadow: rgba(0,0,0,0.08);
         }
-        
-        * { -webkit-tap-highlight-color: transparent; }
         
         body {
-            font-family: 'Rajdhani', sans-serif;
-            background: var(--bg-deep);
-            color: var(--text);
+            font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             min-height: 100vh;
-            overflow-x: hidden;
         }
         
-        /* Background Grid */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                linear-gradient(90deg, var(--border) 1px, transparent 1px),
-                linear-gradient(var(--border) 1px, transparent 1px);
-            background-size: 50px 50px;
-            opacity: 0.3;
-            pointer-events: none;
-            z-index: 0;
-        }
-        
-        /* Header */
         .header {
-            position: sticky;
-            top: 0;
-            background: linear-gradient(180deg, var(--bg-deep) 0%, rgba(3,5,8,0.95) 100%);
-            padding: 15px 20px;
-            z-index: 100;
-            border-bottom: 1px solid var(--border);
-            backdrop-filter: blur(10px);
-        }
-        
-        .header-content {
+            background: var(--bg-dark);
+            color: #fff;
+            padding: 16px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            max-width: 600px;
-            margin: 0 auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
         
         .logo {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
         
         .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-weight: 600;
             font-size: 18px;
-            box-shadow: 0 0 20px var(--glow);
         }
         
         .logo-text {
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .header-badge {
-            background: var(--danger);
-            color: white;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 20px;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-        
-        /* Stats Bar */
-        .stats-bar {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            padding: 20px;
-            background: var(--bg-dark);
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--primary);
-            line-height: 1;
-        }
-        
-        .stat-label {
-            font-size: 11px;
-            color: var(--text-fade);
-            letter-spacing: 1px;
-            margin-top: 4px;
-        }
-        
-        /* Main Container */
-        .main {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            position: relative;
-            z-index: 1;
-        }
-        
-        /* Navigation */
-        .nav {
-            display: flex;
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 5px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border);
-        }
-        
-        .nav-btn {
-            flex: 1;
-            padding: 12px;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            color: var(--text-dim);
-            background: transparent;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .nav-btn.active {
-            background: var(--primary);
-            color: var(--bg-deep);
-            box-shadow: 0 0 20px var(--glow);
-        }
-        
-        .nav-btn-icon {
+            font-family: 'IBM Plex Mono', monospace;
             font-size: 18px;
-            display: block;
-            margin-bottom: 4px;
-        }
-        
-        /* Pages */
-        .page { display: none; }
-        .page.active { display: block; }
-        
-        /* Radar */
-        .radar-wrapper {
-            position: relative;
-            width: 280px;
-            height: 280px;
-            margin: 30px auto;
-        }
-        
-        .radar {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: 
-                radial-gradient(circle, transparent 30%, var(--border) 31%, var(--border) 33%, transparent 34%),
-                radial-gradient(circle, transparent 55%, var(--border) 56%, var(--border) 58%, transparent 59%),
-                radial-gradient(circle, transparent 80%, var(--border) 81%, var(--border) 83%, transparent 84%);
-            border: 2px solid var(--primary);
-            box-shadow: 
-                0 0 40px var(--glow),
-                inset 0 0 60px rgba(0,229,255,0.1);
-            position: relative;
-            animation: radar-pulse 3s ease-in-out infinite;
-        }
-        
-        @keyframes radar-pulse {
-            0%, 100% { box-shadow: 0 0 40px var(--glow), inset 0 0 60px rgba(0,229,255,0.1); }
-            50% { box-shadow: 0 0 60px var(--glow), inset 0 0 80px rgba(0,229,255,0.15); }
-        }
-        
-        .radar::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 45%;
-            height: 2px;
-            background: linear-gradient(90deg, var(--primary), transparent);
-            transform-origin: left center;
-            animation: radar-scan 4s linear infinite;
-            box-shadow: 0 0 10px var(--primary);
-        }
-        
-        @keyframes radar-scan {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .radar-dot {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 12px;
-            height: 12px;
-            background: var(--primary);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 20px var(--primary);
-        }
-        
-        .radar-label {
-            position: absolute;
-            font-size: 10px;
-            color: var(--text-fade);
-            letter-spacing: 1px;
-        }
-        
-        .radar-label.top { top: -5px; left: 50%; transform: translateX(-50%); }
-        .radar-label.bottom { bottom: -5px; left: 50%; transform: translateX(-50%); }
-        .radar-label.left { left: 5px; top: 50%; transform: translateY(-50%); }
-        .radar-label.right { right: 5px; top: 50%; transform: translateY(-50%); }
-        
-        /* Scanner Button */
-        .scan-btn {
-            width: 100%;
-            padding: 18px;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 18px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            background: transparent;
-            border: 2px solid var(--primary);
-            color: var(--primary);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
-        }
-        
-        .scan-btn:hover {
-            background: rgba(0,229,255,0.1);
-            box-shadow: 0 0 30px var(--glow);
-        }
-        
-        .scan-btn.active {
-            background: var(--danger);
-            border-color: var(--danger);
-            color: white;
-            animation: scan-active 1.5s ease-in-out infinite;
-        }
-        
-        @keyframes scan-active {
-            0%, 100% { box-shadow: 0 0 20px rgba(255,45,85,0.5); }
-            50% { box-shadow: 0 0 40px rgba(255,45,85,0.8); }
-        }
-        
-        /* Target Alert */
-        .target-card {
-            background: var(--bg-card);
-            border: 2px solid var(--danger);
-            border-radius: 16px;
-            padding: 24px;
-            margin-top: 24px;
-            display: none;
-            animation: target-flash 0.5s ease-out;
-        }
-        
-        .target-card.active { display: block; }
-        
-        @keyframes target-flash {
-            0% { transform: scale(0.9); opacity: 0; }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        
-        .target-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        
-        .target-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--danger);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            animation: shake 0.5s ease-in-out infinite;
-        }
-        
-        @keyframes shake {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(-5deg); }
-            75% { transform: rotate(5deg); }
-        }
-        
-        .target-info h3 {
-            font-size: 22px;
-            font-weight: 700;
-            color: var(--danger);
-        }
-        
-        .target-info p {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 14px;
-            color: var(--warning);
-        }
-        
-        .target-stats {
-            display: flex;
-            gap: 20px;
-        }
-        
-        .target-stat {
-            flex: 1;
-            background: rgba(255,45,85,0.1);
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .target-stat-value {
-            font-size: 20px;
-            font-weight: 700;
-        }
-        
-        .target-stat-label {
-            font-size: 11px;
-            color: var(--text-fade);
-        }
-        
-        /* Leaderboard */
-        .leaderboard-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-        
-        .leaderboard-header {
-            padding: 16px 20px;
-            background: linear-gradient(90deg, rgba(255,215,0,0.1), rgba(0,153,255,0.1));
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .leaderboard-title {
-            font-size: 16px;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-        
-        .leaderboard-badge {
-            background: var(--success);
-            color: var(--bg-deep);
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 20px;
-        }
-        
-        .leader-item {
-            display: flex;
-            align-items: center;
-            padding: 14px 20px;
-            border-bottom: 1px solid var(--border);
-            transition: background 0.2s;
-        }
-        
-        .leader-item:last-child { border-bottom: none; }
-        .leader-item:hover { background: rgba(0,229,255,0.05); }
-        
-        .leader-rank {
-            width: 36px;
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-dim);
-        }
-        
-        .leader-rank.gold { color: var(--gold); }
-        .leader-rank.silver { color: var(--silver); }
-        .leader-rank.bronze { color: var(--bronze); }
-        
-        .leader-avatar {
-            width: 36px;
-            height: 36px;
-            background: var(--bg-dark);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            margin-right: 12px;
-        }
-        
-        .leader-details { flex: 1; }
-        
-        .leader-name {
-            font-size: 15px;
             font-weight: 600;
         }
         
-        .leader-meta {
-            font-size: 12px;
-            color: var(--text-fade);
-        }
-        
-        .leader-score {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        /* Chat */
-        .chat-container {
-            background: var(--bg-card);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            height: 65vh;
-        }
-        
-        .chat-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .chat-status {
+        .header-status {
             display: flex;
             align-items: center;
             gap: 8px;
             font-size: 13px;
-            color: var(--text-fade);
+            color: #aaa;
         }
         
-        .chat-status-dot {
+        .status-dot {
             width: 8px;
             height: 8px;
-            background: var(--success);
             border-radius: 50%;
-            animation: pulse 2s infinite;
+            background: var(--signal-green);
+            animation: blink 2s infinite;
         }
         
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
         }
         
-        .chat-message {
-            margin-bottom: 16px;
-            animation: chat-in 0.3s ease-out;
+        .main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 24px 20px;
         }
         
-        @keyframes chat-in {
-            from { transform: translateY(10px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        .chat-bubble {
-            background: var(--bg-dark);
-            padding: 12px 16px;
-            border-radius: 16px;
-            border-top-left-radius: 4px;
-            max-width: 85%;
-        }
-        
-        .chat-message.own .chat-bubble {
-            background: var(--primary);
-            color: var(--bg-dark);
-            border-top-left-radius: 16px;
-            border-top-right-radius: 4px;
-            margin-left: auto;
-        }
-        
-        .chat-user {
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 4px;
-            color: var(--warning);
-        }
-        
-        .chat-message.own .chat-user { color: rgba(0,0,0,0.5); }
-        
-        .chat-text {
-            font-size: 14px;
-            line-height: 1.4;
-        }
-        
-        .chat-time {
-            font-size: 11px;
-            color: var(--text-fade);
-            margin-top: 6px;
-        }
-        
-        .chat-message.own .chat-time { color: rgba(0,0,0,0.4); }
-        
-        .chat-input-area {
-            padding: 16px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 12px;
-        }
-        
-        .chat-input {
-            flex: 1;
-            padding: 14px 18px;
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            color: var(--text);
-            font-family: inherit;
-            font-size: 14px;
-        }
-        
-        .chat-input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        
-        .chat-send {
-            width: 48px;
-            height: 48px;
-            background: var(--primary);
-            border: none;
-            border-radius: 50%;
-            color: var(--bg-deep);
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .chat-send:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 20px var(--glow);
-        }
-        
-        /* Profile */
-        .profile-card {
-            background: var(--bg-card);
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            padding: 24px;
-            text-align: center;
-        }
-        
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            margin: 0 auto 16px;
-            box-shadow: 0 0 30px var(--glow);
-        }
-        
-        .profile-rank {
-            font-size: 14px;
-            color: var(--text-fade);
-            margin-bottom: 4px;
-        }
-        
-        .profile-rank span {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .profile-name {
-            font-size: 28px;
-            font-weight: 700;
+        .patrol-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
             margin-bottom: 24px;
         }
         
-        .profile-stats {
+        .patrol-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .patrol-card-header {
             display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--bg-secondary);
+        }
+        
+        .patrol-card-title {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        
+        .patrol-card-badge {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--bg-secondary);
+        }
+        
+        .stat-row:last-child { border-bottom: none; }
+        
+        .stat-label { font-size: 13px; color: var(--text-secondary); }
+        
+        .stat-value {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .stat-value.signal { color: var(--signal-green); }
+        .stat-value.alert { color: var(--signal-amber); }
+        
+        .radar-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .radar-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 20px auto;
+        }
+        
+        .radar-display {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #fff;
+            border: 3px solid var(--text-primary);
+            position: relative;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.05);
+        }
+        
+        .radar-ring {
+            position: absolute;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .radar-ring:nth-child(1) { width: 33%; height: 33%; }
+        .radar-ring:nth-child(2) { width: 66%; height: 66%; }
+        .radar-ring:nth-child(3) { width: 100%; height: 100%; }
+        
+        .radar-crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+        }
+        
+        .radar-crosshair::before,
+        .radar-crosshair::after {
+            content: '';
+            position: absolute;
+            background: var(--border);
+        }
+        
+        .radar-crosshair::before { width: 100%; height: 1px; top: 50%; left: 0; }
+        .radar-crosshair::after { width: 1px; height: 100%; left: 50%; top: 0; }
+        
+        .radar-sweep {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            transform-origin: left center;
+            animation: sweep 4s linear infinite;
+        }
+        
+        @keyframes sweep {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .radar-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: var(--text-primary);
+            border-radius: 50%;
+        }
+        
+        .radar-blip {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--signal-red);
+            border-radius: 50%;
+            animation: blip-fade 3s infinite;
+        }
+        
+        @keyframes blip-fade {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.5); }
+        }
+        
+        .signal-display {
+            display: flex;
+            align-items: flex-end;
             justify-content: center;
-            gap: 24px;
-            padding: 20px 0;
-            border-top: 1px solid var(--border);
+            gap: 6px;
+            height: 60px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+        
+        .signal-bar {
+            width: 12px;
+            background: var(--signal-green);
+            border-radius: 3px;
+        }
+        
+        .signal-bar:nth-child(1) { height: 20px; }
+        .signal-bar:nth-child(2) { height: 35px; }
+        .signal-bar:nth-child(3) { height: 50px; }
+        .signal-bar:nth-child(4) { height: 40px; }
+        .signal-bar:nth-child(5) { height: 25px; }
+        
+        .waveform-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .waveform-container {
+            height: 80px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .waveform-label {
+            position: absolute;
+            top: 8px;
+            left: 12px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .waveform-canvas { width: 100%; height: 100%; }
+        
+        .detection-list {
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .detection-header {
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
             border-bottom: 1px solid var(--border);
+        }
+        
+        .detection-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .detection-item:last-child { border-bottom: none; }
+        
+        .detection-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .detection-info { flex: 1; }
+        
+        .detection-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+        
+        .detection-meta { font-size: 12px; color: var(--text-muted); }
+        
+        .detection-signal { text-align: right; }
+        
+        .signal-strength {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--signal-green);
+        }
+        
+        .signal-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+        
+        .nav-tabs {
+            display: flex;
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .nav-tab {
+            flex: 1;
+            padding: 14px 12px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .nav-tab.active { background: var(--accent); color: white; }
+        
+        .nav-tab-icon { display: block; font-size: 18px; margin-bottom: 4px; }
+        
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        .investigator-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .investigator-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
             margin-bottom: 20px;
         }
         
-        .profile-stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .profile-stat-label {
-            font-size: 12px;
-            color: var(--text-fade);
-        }
-        
-        .device-key-card {
-            background: var(--bg-dark);
-            padding: 16px;
-            border-radius: 12px;
-            border: 1px dashed var(--border);
-        }
-        
-        .device-key-label {
-            font-size: 12px;
-            color: var(--text-fade);
-            margin-bottom: 8px;
-        }
-        
-        .device-key-value {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 16px;
-            color: var(--warning);
-            word-break: break-all;
-        }
-        
-        /* Auth Required */
-        .auth-required {
-            background: var(--bg-card);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            padding: 40px 24px;
-            text-align: center;
-        }
-        
-        .auth-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-        
-        .auth-title {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
-        .auth-desc {
-            color: var(--text-fade);
-            font-size: 14px;
-            margin-bottom: 24px;
-        }
-        
-        .auth-buttons {
+        .investigator-avatar {
+            width: 56px;
+            height: 56px;
+            background: var(--accent);
+            border-radius: 50%;
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        
-        .auth-btn {
-            padding: 14px;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 16px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
-        }
-        
-        .auth-btn-primary {
-            background: var(--primary);
-            border: none;
-            color: var(--bg-deep);
-        }
-        
-        .auth-btn-secondary {
-            background: transparent;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-        }
-        
-        /* Modals */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 1000;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-        }
-        
-        .modal.active { display: flex; }
-        
-        .modal-card {
-            background: var(--bg-card);
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            padding: 32px 24px;
-            width: 100%;
-            max-width: 400px;
-        }
-        
-        .modal-title {
+            color: white;
             font-size: 24px;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 24px;
+            font-weight: 600;
         }
         
-        .modal-input {
-            width: 100%;
-            padding: 16px;
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: var(--text);
-            font-family: inherit;
-            font-size: 15px;
-            margin-bottom: 16px;
+        .investigator-info h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+        
+        .investigator-info span {
+            font-size: 12px;
+            color: var(--text-muted);
+            background: var(--bg-secondary);
+            padding: 4px 10px;
+            border-radius: 20px;
         }
         
-        .modal-input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        
-        .modal-error {
-            background: rgba(255,45,85,0.2);
-            border: 1px solid var(--danger);
-            color: var(--danger);
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 16px;
-            display: none;
-        }
-        
-        .modal-btn {
-            width: 100%;
-            padding: 16px;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 18px;
-            font-weight: 700;
-            background: var(--primary);
-            border: none;
-            border-radius: 10px;
-            color: var(--bg-deep);
-            cursor: pointer;
-            text-transform: uppercase;
-        }
-        
-        .modal-btn-secondary {
-            background: transparent;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            margin-top: 12px;
-        }
-        
-        .modal-close {
-            background: transparent;
-            border: none;
-            color: var(--text-fade);
-            font-size: 14px;
-            cursor: pointer;
-            width: 100%;
-            padding: 12px;
-        }
-        
-        /* User Bar */
-        .user-bar {
-            display: flex;
-            align-items: center;
+        .investigator-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 12px;
         }
         
-        .user-name {
+        .inv-stat {
+            text-align: center;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+        
+        .inv-stat-value {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 24px;
             font-weight: 600;
-            color: var(--warning);
+            color: var(--accent);
         }
         
-        .user-logout {
-            background: transparent;
-            border: 1px solid var(--danger);
-            color: var(--danger);
-            padding: 6px 12px;
-            border-radius: 6px;
+        .inv-stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+        
+        .map-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .map-container {
+            height: 200px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .map-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.5;
+        }
+        
+        .map-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'IBM Plex Mono', monospace;
             font-size: 12px;
-            cursor: pointer;
+            color: var(--text-muted);
         }
-        
-        /* Scroll */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
     </style>
 </head>
 <body>
     <header class="header">
-        <div class="header-content">
-            <div class="logo">
-                <div class="logo-icon">📡</div>
-                <div class="logo-text">BLUEMEANIE</div>
-            </div>
-            <div class="user-bar" id="userBar" style="display: none;">
-                <span class="user-name" id="userName"></span>
-                <button class="user-logout" onclick="logout()">✕</button>
-            </div>
-            <div class="header-badge" id="globalStats">543 detected</div>
+        <div class="logo">
+            <div class="logo-icon">JS</div>
+            <div class="logo-text">JackScanner</div>
+        </div>
+        <div class="header-status">
+            <div class="status-dot"></div>
+            <span>FIELD ACTIVE</span>
         </div>
     </header>
     
-    <div class="stats-bar">
-        <div class="stat-item">
-            <div class="stat-value" id="deviceCount">0</div>
-            <div class="stat-label">CAUGHT</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-value" id="scanTime">00:00</div>
-            <div class="stat-label">TIME</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-value" id="signal">---</div>
-            <div class="stat-label">DBM</div>
-        </div>
-    </div>
-    
     <main class="main">
-        <nav class="nav">
-            <button class="nav-btn active" data-page="radar">
-                <span class="nav-btn-icon">📡</span>
-                RADAR
+        <nav class="nav-tabs">
+            <button class="nav-tab active" onclick="showPage('scanner')">
+                <span class="nav-tab-icon">◎</span>Scanner
             </button>
-            <button class="nav-btn" data-page="leaderboard">
-                <span class="nav-btn-icon">🏆</span>
-                RANK
+            <button class="nav-tab" onclick="showPage('intel')">
+                <span class="nav-tab-icon">◉</span>Intel
             </button>
-            <button class="nav-btn" data-page="chat">
-                <span class="nav-btn-icon">💬</span>
-                CHAT
-            </button>
-            <button class="nav-btn" data-page="profile">
-                <span class="nav-btn-icon">👤</span>
-                PROFILE
+            <button class="nav-tab" onclick="showPage('profile')">
+                <span class="nav-tab-icon">◈</span>Profile
             </button>
         </nav>
         
-        <!-- RADAR PAGE -->
-        <div class="page active" id="page-radar">
-            <div class="radar-wrapper">
-                <div class="radar">
-                    <div class="radar-dot"></div>
+        <div id="scanner" class="page active">
+            <div class="patrol-grid">
+                <div class="patrol-card">
+                    <div class="patrol-card-header">
+                        <span class="patrol-card-title">Session Stats</span>
+                        <span class="patrol-card-badge">LIVE</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Detections</span>
+                        <span class="stat-value" id="detectionCount">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Duration</span>
+                        <span class="stat-value" id="scanDuration">00:00</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Signal Avg</span>
+                        <span class="stat-value signal" id="avgSignal">--</span>
+                    </div>
                 </div>
-                <span class="radar-label top">N</span>
-                <span class="radar-label bottom">S</span>
-                <span class="radar-label left">W</span>
-                <span class="radar-label right">E</span>
+                <div class="patrol-card">
+                    <div class="patrol-card-header">
+                        <span class="patrol-card-title">Threat Level</span>
+                        <span class="patrol-card-badge">LOW</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Cameras</span>
+                        <span class="stat-value" id="cameraCount">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Devices</span>
+                        <span class="stat-value" id="deviceCount">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Priority Alerts</span>
+                        <span class="stat-value alert">0</span>
+                    </div>
+                </div>
             </div>
             
-            <button class="scan-btn" id="scanBtn" onclick="toggleScan()">
-                START SCAN
-            </button>
-            
-            <div class="target-card" id="targetCard">
-                <div class="target-header">
-                    <div class="target-icon">⚠️</div>
-                    <div class="target-info">
-                        <h3 id="targetName">AXON_CAMERA</h3>
-                        <p id="targetMac">00:25:DF:XX:XX:XX</p>
+            <div class="radar-section">
+                <div class="patrol-card-header">
+                    <span class="patrol-card-title">Radar Display</span>
+                    <span class="patrol-card-badge">360°</span>
+                </div>
+                <div class="radar-container">
+                    <div class="radar-display">
+                        <div class="radar-ring"></div>
+                        <div class="radar-ring"></div>
+                        <div class="radar-ring"></div>
+                        <div class="radar-crosshair"></div>
+                        <div class="radar-sweep"></div>
+                        <div class="radar-center"></div>
+                        <div class="radar-blip" style="top: 25%; left: 65%;"></div>
+                        <div class="radar-blip" style="top: 60%; left: 30%; animation-delay: 1s;"></div>
                     </div>
                 </div>
-                <div class="target-stats">
-                    <div class="target-stat">
-                        <div class="target-stat-value" id="targetRssi">-65</div>
-                        <div class="target-stat-label">DBM</div>
+                <div class="signal-display">
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                </div>
+            </div>
+            
+            <div class="waveform-section">
+                <div class="patrol-card-header">
+                    <span class="patrol-card-title">Signal Waveform</span>
+                </div>
+                <div class="waveform-container">
+                    <span class="waveform-label">ANALYZING...</span>
+                    <canvas id="waveform" class="waveform-canvas"></canvas>
+                </div>
+            </div>
+            
+            <div class="detection-list">
+                <div class="detection-header">Recent Detections</div>
+                <div id="detectionLog">
+                    <div class="detection-item">
+                        <div class="detection-icon">📹</div>
+                        <div class="detection-info">
+                            <div class="detection-name">AXON_CAM_01</div>
+                            <div class="detection-meta">MAC: 00:25:DF:XX:XX:XX • Area North</div>
+                        </div>
+                        <div class="detection-signal">
+                            <div class="signal-strength">-67</div>
+                            <div class="signal-label">dBm</div>
+                        </div>
                     </div>
-                    <div class="target-stat">
-                        <div class="target-stat-value" id="targetType">CAMERA</div>
-                        <div class="target-stat-label">TYPE</div>
-                    </div>
-                    <div class="target-stat">
-                        <div class="target-stat-value" id="targetTime">--:--</div>
-                        <div class="target-stat-label">TIME</div>
+                    <div class="detection-item">
+                        <div class="detection-icon">⚡</div>
+                        <div class="detection-info">
+                            <div class="detection-name">TASER_X2</div>
+                            <div class="detection-meta">MAC: FC:A9:E8:XX:XX:XX • Area West</div>
+                        </div>
+                        <div class="detection-signal">
+                            <div class="signal-strength">-72</div>
+                            <div class="signal-label">dBm</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- LEADERBOARD PAGE -->
-        <div class="page" id="page-leaderboard">
-            <div class="leaderboard-card">
-                <div class="leaderboard-header">
-                    <span class="leaderboard-title">🏆 TOP AGENTS</span>
-                    <span class="leaderboard-badge">LIVE</span>
+        <div id="intel" class="page">
+            <div class="map-section">
+                <div class="patrol-card-header">
+                    <span class="patrol-card-title">Coverage Map</span>
                 </div>
-                <div id="leaderboardList"></div>
+                <div class="map-container">
+                    <div class="map-grid"></div>
+                    <span class="map-label">MAP VIEW</span>
+                </div>
+            </div>
+            <div class="detection-list" style="margin-top: 24px;">
+                <div class="detection-header">Network Intel</div>
+                <div class="detection-item">
+                    <div class="detection-icon">📡</div>
+                    <div class="detection-info">
+                        <div class="detection-name">SSID: AXON_NET_5G</div>
+                        <div class="detection-meta">Channel 36 • 5GHz</div>
+                    </div>
+                    <div class="detection-signal">
+                        <div class="signal-strength">-55</div>
+                        <div class="signal-label">dBm</div>
+                    </div>
+                </div>
+                <div class="detection-item">
+                    <div class="detection-icon">📶</div>
+                    <div class="detection-info">
+                        <div class="detection-name">SSID: AXON_BODY2</div>
+                        <div class="detection-meta">Channel 11 • 2.4GHz</div>
+                    </div>
+                    <div class="detection-signal">
+                        <div class="signal-strength">-68</div>
+                        <div class="signal-label">dBm</div>
+                    </div>
+                </div>
             </div>
         </div>
         
-        <!-- CHAT PAGE -->
-        <div class="page" id="page-chat">
-            <div class="chat-container">
-                <div class="chat-header">
-                    <span>💬 DETECTOR CHAT</span>
-                    <div class="chat-status">
-                        <span class="chat-status-dot"></span>
-                        <span id="userCount">87 online</span>
+        <div id="profile" class="page">
+            <div class="investigator-card">
+                <div class="investigator-header">
+                    <div class="investigator-avatar">A</div>
+                    <div class="investigator-info">
+                        <h2>Agent Anonymous</h2>
+                        <span>Field Investigator</span>
                     </div>
                 </div>
-                <div class="chat-messages" id="chatList"></div>
-                <div class="chat-input-area">
-                    <input type="text" class="chat-input" id="chatInput" placeholder="Message...">
-                    <button class="chat-send" onclick="sendChat()">➤</button>
+                <div class="investigator-stats">
+                    <div class="inv-stat">
+                        <div class="inv-stat-value">47</div>
+                        <div class="inv-stat-label">Detections</div>
+                    </div>
+                    <div class="inv-stat">
+                        <div class="inv-stat-value">12</div>
+                        <div class="inv-stat-label">Days Active</div>
+                    </div>
+                    <div class="inv-stat">
+                        <div class="inv-stat-value">#8</div>
+                        <div class="inv-stat-label">Rank</div>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- PROFILE PAGE -->
-        <div class="page" id="page-profile">
-            <div class="auth-required" id="authRequired">
-                <div class="auth-icon">🔐</div>
-                <div class="auth-title">Sign In Required</div>
-                <div class="auth-desc">Sign in to track your detection stats and compete on the leaderboard</div>
-                <div class="auth-buttons">
-                    <button class="auth-btn auth-btn-primary" onclick="showLogin()">Sign In</button>
-                    <button class="auth-btn auth-btn-secondary" onclick="showSignup()">Create Account</button>
+            <div class="patrol-card">
+                <div class="patrol-card-header">
+                    <span class="patrol-card-title">Equipment</span>
                 </div>
-            </div>
-            
-            <div class="profile-card" id="profileCard" style="display: none;">
-                <div class="profile-avatar" id="profileAvatar">👤</div>
-                <div class="profile-rank">RANK <span id="profileRank">#1</span></div>
-                <div class="profile-name" id="profileName">Username</div>
-                
-                <div class="profile-stats">
-                    <div>
-                        <div class="profile-stat-value" id="profileTotal">0</div>
-                        <div class="profile-stat-label">TOTAL</div>
-                    </div>
-                    <div>
-                        <div class="profile-stat-value" id="profileStreak">0</div>
-                        <div class="profile-stat-label">STREAK</div>
-                    </div>
-                    <div>
-                        <div class="profile-stat-value" id="profileScore">0</div>
-                        <div class="profile-stat-label">SCORE</div>
-                    </div>
+                <div class="stat-row">
+                    <span class="stat-label">Scanner Model</span>
+                    <span class="stat-value">JackScanner v2</span>
                 </div>
-                
-                <div class="device-key-card">
-                    <div class="device-key-label">YOUR DEVICE KEY (HWID + ACCESS)</div>
-                    <div class="device-key-value" id="deviceKey">XXXX-XXXX-XXXX</div>
+                <div class="stat-row">
+                    <span class="stat-label">Device Key</span>
+                    <span class="stat-value" style="font-size: 12px;">XXXX-XXXX-XXXX</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Last Sync</span>
+                    <span class="stat-value">2 min ago</span>
                 </div>
             </div>
         </div>
     </main>
     
-    <!-- LOGIN MODAL -->
-    <div class="modal" id="loginModal">
-        <div class="modal-card">
-            <div class="modal-title">🔐 SIGN IN</div>
-            <div class="modal-error" id="loginError"></div>
-            <input type="email" class="modal-input" id="loginEmail" placeholder="Email">
-            <input type="text" class="modal-input" id="loginKey" placeholder="Access Key (XXXX-XXXX-XXXX)">
-            <button class="modal-btn" onclick="login()">Sign In</button>
-            <button class="modal-btn modal-btn-secondary" onclick="closeModal()">Cancel</button>
-        </div>
-    </div>
-    
-    <!-- SIGNUP MODAL -->
-    <div class="modal" id="signupModal">
-        <div class="modal-card">
-            <div class="modal-title">📝 CREATE ACCOUNT</div>
-            <div class="modal-error" id="signupError"></div>
-            <input type="text" class="modal-input" id="signupName" placeholder="Username / Callsign">
-            <input type="email" class="modal-input" id="signupEmail" placeholder="Email">
-            <input type="text" class="modal-input" id="signupKey" placeholder="Access Key">
-            <div class="device-key-card" style="margin-bottom: 16px;">
-                <div class="device-key-label">YOUR DEVICE ID (HWID)</div>
-                <div class="device-key-value" id="signupHwid">Generating...</div>
-            </div>
-            <button class="modal-btn" onclick="signup()">Create Account</button>
-            <button class="modal-btn modal-btn-secondary" onclick="closeModal()">Cancel</button>
-        </div>
-    </div>
-    
     <script>
-        // === HWID Generation ===
-        function generateHWID() {
-            const nav = navigator.userAgent;
-            const screen = window.screen;
-            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const lang = navigator.language;
-            const hw = navigator.hardwareConcurrency || 0;
-            const mem = navigator.deviceMemory || 0;
-            
-            const str = nav + '|' + screen.width + 'x' + screen.height + '|' + tz + '|' + lang + '|' + hw + '|' + mem;
-            
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                hash = ((hash << 5) - hash) + str.charCodeAt(i);
-                hash = hash & hash;
-            }
-            
-            const hex = Math.abs(hash).toString(16).padStart(8, '0');
-            return hex.slice(0,4).toUpperCase() + '-' + hex.slice(4,8).toUpperCase() + '-' + hex.slice(0,4).toUpperCase();
-        }
-        
-        const hwid = generateHWID();
-        
-        // === State ===
-        let user = null;
-        let scanning = false;
-        let scanStart = null;
-        let devices = [];
-        let audio = null;
-        
-        // === Initialize ===
-        init();
-        
-        function init() {
-            const session = localStorage.getItem('blueMeanieUser');
-            if (session) {
-                try {
-                    user = JSON.parse(session);
-                    showLoggedIn();
-                } catch(e) {}
-            }
-            
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.addEventListener('click', () => showPage(btn.dataset.page));
-            });
-            
-            document.getElementById('signupHwid').textContent = hwid;
-            loadLeaderboard();
-            loadChat();
-        }
-        
-        // === Navigation ===
-        function showPage(page) {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('[data-page="' + page + '"]').classList.add('active');
+        function showPage(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('page-' + page).classList.add('active');
+            document.getElementById(pageId).classList.add('active');
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            event.target.closest('.nav-tab').classList.add('active');
         }
         
-        // === Auth ===
-        function showLogin() { document.getElementById('loginModal').classList.add('active'); }
-        function showSignup() { document.getElementById('signupModal').classList.add('active'); }
-        function closeModal() {
-            document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
-            document.querySelectorAll('.modal-error').forEach(e => e.style.display = 'none');
-        }
+        const canvas = document.getElementById('waveform');
+        const ctx = canvas.getContext('2d');
         
-        function login() {
-            const email = document.getElementById('loginEmail').value;
-            const key = document.getElementById('loginKey').value;
-            
-            if (!email || !key) {
-                showError('loginError', 'Please fill all fields');
-                return;
+        function drawWaveform() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            const time = Date.now() / 100;
+            for (let x = 0; x < canvas.width; x++) {
+                const y = canvas.height / 2 + 
+                    Math.sin(x / 20 + time) * 20 +
+                    Math.sin(x / 10 + time * 2) * 10 +
+                    Math.sin(x / 5 + time * 0.5) * 5;
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
             }
-            
-            const deviceKey = hwid + '-' + key.slice(0,4);
-            
-            user = {
-                email: email,
-                name: email.split('@')[0],
-                deviceKey: deviceKey,
-                hwid: hwid,
-                total: 0,
-                streak: 0,
-                score: 0
-            };
-            
-            localStorage.setItem('blueMeanieUser', JSON.stringify(user));
-            closeModal();
-            showLoggedIn();
-            loadProfile();
+            ctx.stroke();
+            requestAnimationFrame(drawWaveform);
         }
         
-        function signup() {
-            const name = document.getElementById('signupName').value;
-            const email = document.getElementById('signupEmail').value;
-            const key = document.getElementById('signupKey').value;
-            
-            if (!name || !email || !key) {
-                showError('signupError', 'Please fill all fields');
-                return;
-            }
-            
-            const deviceKey = hwid + '-' + key.slice(0,4);
-            
-            user = {
-                email: email,
-                name: name,
-                deviceKey: deviceKey,
-                hwid: hwid,
-                total: 0,
-                streak: 0,
-                score: 0
-            };
-            
-            localStorage.setItem('blueMeanieUser', JSON.stringify(user));
-            closeModal();
-            showLoggedIn();
-            showPage('radar');
-        }
-        
-        function logout() {
-            user = null;
-            localStorage.removeItem('blueMeanieUser');
-            document.getElementById('userBar').style.display = 'none';
-            document.getElementById('authRequired').style.display = 'block';
-            document.getElementById('profileCard').style.display = 'none';
-        }
-        
-        function showLoggedIn() {
-            document.getElementById('userBar').style.display = 'flex';
-            document.getElementById('userName').textContent = user.name;
-            loadProfile();
-        }
-        
-        function showError(id, msg) {
-            const el = document.getElementById(id);
-            el.textContent = msg;
-            el.style.display = 'block';
-        }
-        
-        // === Scanner ===
-        function toggleScan() {
-            scanning = !scanning;
-            const btn = document.getElementById('scanBtn');
-            
-            if (scanning) {
-                btn.textContent = 'STOP SCAN';
-                btn.classList.add('active');
-                scanStart = Date.now();
-                updateTimer();
-            } else {
-                btn.textContent = 'START SCAN';
-                btn.classList.remove('active');
-            }
-        }
-        
-        function updateTimer() {
-            if (!scanning || !scanStart) return;
-            const elapsed = Math.floor((Date.now() - scanStart) / 1000);
-            const m = Math.floor(elapsed / 60).toString().padStart(2,'0');
-            const s = (elapsed % 60).toString().padStart(2,'0');
-            document.getElementById('scanTime').textContent = m + ':' + s;
-            setTimeout(updateTimer, 1000);
-        }
-        
-        // Demo detection
-        function simulate() {
-            if (!scanning) return;
-            const demos = [
-                {mac: '00:25:DF:A1:B2:C3', name: 'AXON_CAMERA', rssi: -65},
-                {mac: 'FC:A9:E8:12:34:56', name: 'TASER_7', rssi: -72},
-                {mac: 'X4G:S01506', name: 'AXON_BODY', rssi: -80},
-            ];
-            const d = demos[Math.floor(Math.random() * demos.length)];
-            if (!devices.find(x => x.mac === d.mac)) {
-                devices.push(d);
-                onDetect(d);
-            }
-        }
-        
-        function onDetect(d) {
-            playAlert();
-            document.getElementById('deviceCount').textContent = devices.length;
-            document.getElementById('signal').textContent = d.rssi;
-            
-            document.getElementById('targetName').textContent = d.name;
-            document.getElementById('targetMac').textContent = d.mac;
-            document.getElementById('targetRssi').textContent = d.rssi;
-            document.getElementById('targetType').textContent = d.name.includes('CAMERA') ? 'CAMERA' : 'TASER';
-            document.getElementById('targetTime').textContent = new Date().toLocaleTimeString();
-            document.getElementById('targetCard').classList.add('active');
-            
-            if (user) updateScore(10);
-        }
-        
-        function playAlert() {
-            try {
-                if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
-                const o = audio.createOscillator();
-                const g = audio.createGain();
-                o.connect(g);
-                g.connect(audio.destination);
-                o.frequency.value = 880;
-                o.type = 'square';
-                g.gain.setValueAtTime(0.3, audio.currentTime);
-                g.gain.exponentialRampToValueAtTime(0.01, audio.currentTime + 0.5);
-                o.start();
-                o.stop(audio.currentTime + 0.5);
-            } catch(e) {}
-        }
-        
-        setInterval(simulate, 30000);
-        
-        // === Leaderboard ===
-        function loadLeaderboard() {
-            // Demo data - replace with Google Sheets API
-            const data = [
-                {n:'GhostHunter',t:156,s:45,sc:2450},
-                {n:'RadarOps',t:98,s:23,sc:1820},
-                {n:'AxonSeeker',t:87,s:12,sc:1540},
-                {n:'SignalChaser',t:65,s:8,sc:980},
-                {n:'BlueWatcher',t:43,s:5,sc:650},
-                {n:'NightOwl',t:32,s:7,sc:520},
-            ];
-            
-            let html = '';
-            data.forEach((u,i) => {
-                const rank = i===0?'gold':i===1?'silver':i===2?'bronze':'';
-                html += '<div class="leader-item"><div class="leader-rank '+rank+'">#'+(i+1)+'</div><div class="leader-avatar">👤</div><div class="leader-details"><div class="leader-name">'+u.n+'</div><div class="leader-meta">'+u.t+' detected • '+u.s+' day streak</div></div><div class="leader-score">'+u.sc+'</div></div>';
-            });
-            document.getElementById('leaderboardList').innerHTML = html;
-        }
-        
-        // === Chat ===
-        function loadChat() {
-            const msgs = [
-                {u:'GhostHunter',t:'Just caught a TASER 7 downtown! 🔥',time:'2 min'},
-                {u:'RadarOps',t:'Anyone detecting near the stadium?',time:'5 min'},
-                {u:'AxonSeeker',t:'BlueMeanie app is sick 🔴',time:'10 min'},
-                {u:'SignalChaser',t:'3rd TASER today, best streak yet!',time:'15 min'},
-                {u:'BlueWatcher',t:'New update downloaded ✅',time:'22 min'},
-            ];
-            
-            let html = '';
-            msgs.forEach(m => {
-                const own = user && user.name === m.u ? ' own' : '';
-                html += '<div class="chat-message'+own+'"><div class="chat-bubble"><div class="chat-user">'+m.u+'</div><div class="chat-text">'+m.t+'</div><div class="chat-time">'+m.time+' ago</div></div></div>';
-            });
-            document.getElementById('chatList').innerHTML = html;
-        }
-        
-        function sendChat() {
-            const input = document.getElementById('chatInput');
-            const text = input.value.trim();
-            if (!text) return;
-            if (!user) { alert('Sign in to chat'); showLogin(); return; }
-            
-            const el = document.createElement('div');
-            el.className = 'chat-message own';
-            el.innerHTML = '<div class="chat-bubble"><div class="chat-user">'+user.name+'</div><div class="chat-text">'+text+'</div><div class="chat-time">Just now</div></div>';
-            document.getElementById('chatList').insertBefore(el, document.getElementById('chatList').firstChild);
-            input.value = '';
-        }
-        
-        // === Profile ===
-        function loadProfile() {
-            if (!user) {
-                document.getElementById('authRequired').style.display = 'block';
-                document.getElementById('profileCard').style.display = 'none';
-                return;
-            }
-            
-            document.getElementById('authRequired').style.display = 'none';
-            document.getElementById('profileCard').style.display = 'block';
-            
-            document.getElementById('profileName').textContent = user.name;
-            document.getElementById('profileTotal').textContent = user.total || 0;
-            document.getElementById('profileStreak').textContent = user.streak || 0;
-            document.getElementById('profileScore').textContent = user.score || 0;
-            document.getElementById('profileRank').textContent = '#' + (Math.floor(Math.random() * 50) + 1);
-            document.getElementById('deviceKey').textContent = user.deviceKey || 'N/A';
-            document.getElementById('profileAvatar').textContent = user.name.charAt(0).toUpperCase();
-        }
-        
-        function updateScore(points) {
-            if (!user) return;
-            user.score = (user.score || 0) + points;
-            user.total = (user.total || 0) + 1;
-            localStorage.setItem('blueMeanieUser', JSON.stringify(user));
-            document.getElementById('profileTotal').textContent = user.total;
-            document.getElementById('profileScore').textContent = user.score;
-        }
+        drawWaveform();
     </script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">BlueMeanie</string>
-    <string name="app_tagline">BLE Device Detector</string>
+    <string name="app_tagline">Axon Device Scanner</string>
     
     <!-- Status -->
     <string name="status_label">STATUS</string>
@@ -14,25 +14,46 @@
     <string name="start_scan">START SCAN</string>
     <string name="stop_scan">STOP</string>
     <string name="stop">STOP</string>
+    <string name="pause">PAUSE</string>
     <string name="settings">SETTINGS</string>
     
     <!-- Target -->
     <string name="target_oui">Target OUI: 00:25:DF</string>
     
     <!-- Alerts -->
-    <string name="alert_title">⚡ TARGET DETECTED</string>
-    <string name="alert_message">%1$s\n%2$s\nSignal: %3$d dBm</string>
+    <string name="alert_title">AXON DEVICE DETECTED</string>
+    <string name="alert_message">%1$s\nObserved Signals: %2$d</string>
     <string name="unknown_device">Unknown Device</string>
     
     <!-- Service -->
-    <string name="service_title">JackScanner Active</string>
-    <string name="service_scanning">Scanning for devices…</string>
+    <string name="service_title">BlueMeanie Scanning</string>
+    <string name="service_scanning">Monitoring for Axon Devices</string>
     
-    <!-- Notifications -->
-    <string name="channel_name">Scanner Alerts</string>
-    <string name="channel_description">Alerts when target devices are detected</string>
+    <!-- Notification Channels -->
+    <string name="channel_scanning_name">Scanning</string>
+    <string name="channel_scanning_description">Persistent notification for ongoing scanning</string>
+    <string name="channel_alerts_name">Alerts</string>
+    <string name="channel_alerts_description">Alerts when Axon devices are detected</string>
+    <string name="channel_community_name">Community</string>
+    <string name="channel_community_description">Community activity notifications</string>
     
     <!-- Errors -->
     <string name="bluetooth_required">Enable Bluetooth to scan</string>
     <string name="permission_required">Permissions required</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Welcome to BlueMeanie</string>
+    <string name="onboarding_welcome_subtitle">Axon Device Scanner</string>
+    <string name="onboarding_bluetooth_title">Nearby Devices</string>
+    <string name="onboarding_bluetooth_description">Required for BLE scanning</string>
+    <string name="onboarding_notifications_title">Notifications</string>
+    <string name="onboarding_notifications_description">Alert you when devices are detected</string>
+    <string name="onboarding_location_title">Location</string>
+    <string name="onboarding_location_description">Required for BLE scanning on older Android</string>
+    <string name="onboarding_background_location_title">Background Location</string>
+    <string name="onboarding_background_location_description">For continuous monitoring</string>
+    <string name="onboarding_username_title">Choose Your Identity</string>
+    <string name="onboarding_grant_button">GRANT PERMISSION</string>
+    <string name="onboarding_continue_button">CONTINUE</string>
+    <string name="onboarding_start_button">START SCANNING</string>
 </resources>

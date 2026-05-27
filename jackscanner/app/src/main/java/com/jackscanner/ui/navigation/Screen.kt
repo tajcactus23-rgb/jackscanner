@@ -1,0 +1,37 @@
+package com.jackscanner.ui.navigation
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.List
+import androidx.compose.ui.graphics.vector.ImageVector
+
+sealed class Screen(
+    val route: String,
+    val title: String,
+    val icon: ImageVector
+) {
+    object Home : Screen("home", "Home", Icons.Default.Home)
+    object Feed : Screen("feed", "Feed", Icons.Default.List)
+    object Heatmap : Screen("heatmap", "Heatmap", Icons.Default.Map)
+    object Community : Screen("community", "Community", Icons.Default.People)
+    object Scoreboard : Screen("scoreboard", "Scoreboard", Icons.Default.Star)
+    object Settings : Screen("settings", "Settings", Icons.Default.Settings)
+    
+    object Onboarding : Screen("onboarding", "Onboarding", Icons.Default.Home)
+    object DetectionDetail : Screen("detection/{detectionId}", "Detection", Icons.Default.Home) {
+        fun createRoute(detectionId: String) = "detection/$detectionId"
+    }
+}
+
+val bottomNavItems = listOf(
+    Screen.Home,
+    Screen.Feed,
+    Screen.Heatmap,
+    Screen.Community,
+    Screen.Scoreboard,
+    Screen.Settings
+)
