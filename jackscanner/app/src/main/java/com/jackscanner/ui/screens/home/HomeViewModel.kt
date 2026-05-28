@@ -145,10 +145,20 @@ class HomeViewModel @Inject constructor(
     
     fun onPermissionsGranted() {
         _uiState.update { it.copy(needsPermissions = false) }
-        toggleScanning()
+    }
+    
+    fun onPermissionDenied() {
+        _uiState.update { it.copy(needsPermissions = true) }
     }
     
     fun refreshData() {
         loadData()
     }
 }
+
+data class PermissionStep(
+    val permission: String?,
+    val title: String,
+    val description: String,
+    val rationale: String
+)

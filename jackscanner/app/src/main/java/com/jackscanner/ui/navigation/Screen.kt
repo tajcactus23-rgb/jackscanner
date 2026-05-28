@@ -6,7 +6,7 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -16,7 +16,7 @@ sealed class Screen(
     val icon: ImageVector
 ) {
     object Home : Screen("home", "Home", Icons.Default.Home)
-    object Feed : Screen("feed", "Feed", Icons.Default.List)
+    object Puzzle : Screen("puzzle", "Puzzle", Icons.Default.Psychology)
     object Heatmap : Screen("heatmap", "Heatmap", Icons.Default.Map)
     object Community : Screen("community", "Community", Icons.Default.People)
     object Scoreboard : Screen("scoreboard", "Scoreboard", Icons.Default.Star)
@@ -35,7 +35,7 @@ sealed class Screen(
 
 val bottomNavItems = listOf(
     Screen.Home,
-    Screen.Feed,
+    Screen.Puzzle,
     Screen.Heatmap,
     Screen.Community,
     Screen.Scoreboard,

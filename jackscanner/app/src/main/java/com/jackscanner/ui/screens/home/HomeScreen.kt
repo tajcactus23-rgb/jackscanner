@@ -46,57 +46,75 @@ fun HomeScreen(
     val colors = BlueMeanieTheme.colors
     val context = LocalContext.current
     
-    // All required permissions based on Android version
-    val requiredPermissions = remember {
-        buildList {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                add(Manifest.permission.BLUETOOTH_SCAN)
-                add(Manifest.permission.BLUETOOTH_CONNECT)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                add(Manifest.permission.POST_NOTIFICATIONS)
-            }
-            // Location needed for BLE on older Android versions
-            add(Manifest.permission.ACCESS_FINE_LOCATION)
-            add(Manifest.permission.ACCESS_COARSE_LOCATION)
-        }.toTypedArray()
-    }
+    // Permission step tracking
+    var currentPermissionStep by remember { mutableIntStateOf(0) }
     
-    // Permission state
-    var hasRequestedPermissions by remember { mutableStateOf(false) }
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val allGranted = permissions.entries.all { it.value }
-        hasRequestedPermissions = true
-        if (allGranted) {
-            viewModel.onPermissionsGranted()
-        }
-    }
-    
-    // Request permissions on first composable entry
-    LaunchedEffect(Unit) {
-        if (!hasRequestedPermissions) {
-            permissionLauncher.launch(requiredPermissions)
-        }
-    }
-    
-    // Set up callbacks
-    LaunchedEffect(Unit) {
-        viewModel.setCallbacks(
-            onBluetoothCheck = {
-                try {
-                    val intent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
-                    context.startActivity(intent)
-                } catch (e: Exception) {
-                    val intent = Intent(Settings.ACTION_SETTINGS)
-                    context.startActivity(intent)
-                }
-            },
-            onPermissionsCheck = {
-                permissionLauncher.launch(requiredPermissions)
-            }
+    // Define permission steps (requests one at a time)
+    val permissionSteps = listOf(
+        PermissionStep(
+            permission = Manifest.permission.ACCESS_FINE_LOCATION,
+            title = "Location Required",
+            description = "Location access is needed to detect BLE devices",
+            rationale = "This app scans for Bluetooth devices and needs location permission to find nearby devices. This is required by Android for BLE scanning."
+        ),
+        PermissionStep(
+            permission = Manifest.permission.ACCESS_COARSE_LOCATION,
+            title = "Coarse Location",
+            description = "Approximate location helps improve device detection",
+            rationale = "Using coarse location improves the accuracy of device detection in your area."
+        ),
+        PermissionStep(
+            permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) 
+                Manifest.permission.BLUETOOTH_SCAN else null,
+            title = "Bluetooth Scan",
+            description = "Required to scan for Bluetooth Low Energy devices",
+            rationale = "Bluetooth scan permission allows the app to discover nearby BLE devices."
+        ),
+        PermissionStep(
+            permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) 
+                Manifest.permission.BLUETOOTH_CONNECT else null,
+            title = "Bluetooth Connect",
+            description = "Needed to communicate with detected devices",
+            rationale = "This permission allows the app to connect to and receive data from Bluetooth devices."
+        ),
+        PermissionStep(
+            permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) 
+                Manifest.permission.POST_NOTIFICATIONS else null,
+            title = "Notifications",
+            description = "Show alerts when devices are detected",
+            rationale = "Get notified when the scanner detects devices, even when the app is in the background."
         )
+    ).filter { it.permission != null }
+    
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Move to next permission step
+            if (currentPermissionStep < permissionSteps.size - 1) {
+                currentPermissionStep++
+                // Launch next permission
+                permissionSteps.getOrNull(currentPermissionStep)?.permission?.let {
+                    permissionLauncher.launch(it)
+                }
+            } else {
+                // All permissions granted
+                viewModel.onPermissionsGranted()
+            }
+        } else {
+            // Permission denied, show rationale dialog
+            viewModel.onPermissionDenied()
+        }
+    }
+    
+    // Request first permission on first composable entry
+    LaunchedEffect(Unit) {
+        if (currentPermissionStep == 0 && permissionSteps.isNotEmpty()) {
+            permissionSteps[0].permission?.let {
+                permissionLauncher.launch(it)
+            }
+            currentPermissionStep = 0
+        }
     }
     
     // Alert dialog for Bluetooth
@@ -126,22 +144,23 @@ fun HomeScreen(
         )
     }
     
-    // Alert dialog for permissions (if denied)
-    if (uiState.needsPermissions && hasRequestedPermissions) {
+    // Alert dialog for permission rationale
+    if (uiState.needsPermissions && permissionSteps.isNotEmpty()) {
+        val currentStep = permissionSteps.getOrNull(currentPermissionStep) ?: permissionSteps[0]
         AlertDialog(
             onDismissRequest = { },
-            title = { Text("Permissions Required") },
-            text = { Text("Please grant all required permissions to scan for BLE devices. You need Bluetooth, Location, and Notification permissions.") },
+            title = { Text(currentStep.title) },
+            text = { Text(currentStep.description + "\n\n" + currentStep.rationale) },
             confirmButton = {
                 TextButton(onClick = {
-                    permissionLauncher.launch(requiredPermissions)
+                    permissionLauncher.launch(currentStep.permission!!)
                 }) {
-                    Text("Grant Permissions")
+                    Text("Grant Permission")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { }) {
-                    Text("Cancel")
+                    Text("Skip")
                 }
             }
         )
