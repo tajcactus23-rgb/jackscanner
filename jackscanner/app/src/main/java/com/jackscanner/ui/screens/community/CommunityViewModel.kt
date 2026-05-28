@@ -6,6 +6,7 @@ import com.jackscanner.data.preferences.PreferencesManager
 import com.jackscanner.domain.model.UserProfile
 import com.jackscanner.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -42,6 +43,9 @@ class CommunityViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(CommunityUiState())
     val uiState: StateFlow<CommunityUiState> = _uiState.asStateFlow()
+    
+    private var profileJob: Job? = null
+    private var devSettingsJob: Job? = null
 
     init {
         loadUserProfile()
@@ -50,7 +54,8 @@ class CommunityViewModel @Inject constructor(
     }
 
     private fun observeDevSettings() {
-        viewModelScope.launch {
+        devSettingsJob?.cancel()
+        devSettingsJob = viewModelScope.launch {
             combine(
                 preferencesManager.isDevAccount,
                 preferencesManager.devBadgeEnabled,
@@ -72,7 +77,8 @@ class CommunityViewModel @Inject constructor(
     }
 
     private fun loadUserProfile() {
-        viewModelScope.launch {
+        profileJob?.cancel()
+        profileJob = viewModelScope.launch {
             userRepository.getUserProfile().collect { profile ->
                 _uiState.update { it.copy(userProfile = profile ?: createDefaultProfile()) }
             }

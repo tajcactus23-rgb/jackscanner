@@ -6,6 +6,7 @@ import com.jackscanner.domain.model.CommunityDetection
 import com.jackscanner.domain.model.TimeRange
 import com.jackscanner.domain.repository.CommunityRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,12 +27,15 @@ class HeatmapViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(HeatmapUiState())
     val uiState: StateFlow<HeatmapUiState> = _uiState.asStateFlow()
     
+    private var loadJob: Job? = null
+    
     init {
         loadCommunityDetections()
     }
     
     private fun loadCommunityDetections() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
             communityRepository.getCommunityDetectionsByTimeRange(
@@ -45,8 +49,10 @@ class HeatmapViewModel @Inject constructor(
     }
     
     fun setTimeRange(timeRange: TimeRange) {
-        _uiState.update { it.copy(selectedTimeRange = timeRange) }
-        loadCommunityDetections()
+        if (_uiState.value.selectedTimeRange != timeRange) {
+            _uiState.update { it.copy(selectedTimeRange = timeRange) }
+            loadCommunityDetections()
+        }
     }
     
     fun toggleFilters() {

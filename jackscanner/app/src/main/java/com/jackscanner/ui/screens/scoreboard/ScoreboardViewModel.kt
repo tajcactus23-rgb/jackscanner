@@ -6,6 +6,7 @@ import com.jackscanner.domain.model.UserProfile
 import com.jackscanner.domain.model.UserRank
 import com.jackscanner.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -33,13 +34,17 @@ class ScoreboardViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ScoreboardUiState())
     val uiState: StateFlow<ScoreboardUiState> = _uiState.asStateFlow()
     
+    private var profileJob: Job? = null
+    private var leaderboardJob: Job? = null
+    
     init {
         loadUserProfile()
         loadLeaderboard()
     }
     
     private fun loadUserProfile() {
-        viewModelScope.launch {
+        profileJob?.cancel()
+        profileJob = viewModelScope.launch {
             userRepository.getUserProfile().collect { profile ->
                 _uiState.update { it.copy(userProfile = profile) }
             }
@@ -47,12 +52,11 @@ class ScoreboardViewModel @Inject constructor(
     }
     
     private fun loadLeaderboard() {
-        // Load real leaderboard data from user profile
-        viewModelScope.launch {
+        leaderboardJob?.cancel()
+        leaderboardJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             userRepository.getUserProfile().collect { profile ->
                 if (profile != null) {
-                    // Build leaderboard with actual user data
                     val userEntry = LeaderboardEntry(
                         rank = 0,
                         username = profile.username,
