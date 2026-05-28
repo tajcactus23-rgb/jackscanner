@@ -392,10 +392,6 @@ private fun ChatMessageItem(
         }
     }
 }
-            }
-        }
-    }
-}
 
 @Composable
 private fun MessageInput(
