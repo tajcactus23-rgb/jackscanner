@@ -6,9 +6,6 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,7 +25,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.core.content.ContextCompat
 import com.jackscanner.domain.model.Detection
 import com.jackscanner.domain.model.ScannerStatus
 import com.jackscanner.ui.components.GlassCard
@@ -47,13 +43,38 @@ fun HomeScreen(
     val colors = BlueMeanieTheme.colors
     val context = LocalContext.current
     
-    // Permission launcher
+    // All required permissions based on Android version
+    val requiredPermissions = remember {
+        buildList {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                add(Manifest.permission.BLUETOOTH_SCAN)
+                add(Manifest.permission.BLUETOOTH_CONNECT)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            // Location needed for BLE on older Android versions
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
+            add(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }.toTypedArray()
+    }
+    
+    // Permission state
+    var hasRequestedPermissions by remember { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val allGranted = permissions.entries.all { it.value }
+        hasRequestedPermissions = true
         if (allGranted) {
             viewModel.onPermissionsGranted()
+        }
+    }
+    
+    // Request permissions on first composable entry
+    LaunchedEffect(Unit) {
+        if (!hasRequestedPermissions) {
+            permissionLauncher.launch(requiredPermissions)
         }
     }
     
@@ -61,26 +82,16 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         viewModel.setCallbacks(
             onBluetoothCheck = {
-                // Open Bluetooth settings
                 try {
                     val intent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
                     context.startActivity(intent)
                 } catch (e: Exception) {
-                    // Fallback to general settings
                     val intent = Intent(Settings.ACTION_SETTINGS)
                     context.startActivity(intent)
                 }
             },
             onPermissionsCheck = {
-                val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    arrayOf(
-                        Manifest.permission.BLUETOOTH_SCAN,
-                        Manifest.permission.BLUETOOTH_CONNECT
-                    )
-                } else {
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-                }
-                permissionLauncher.launch(permissions)
+                permissionLauncher.launch(requiredPermissions)
             }
         )
     }
@@ -112,23 +123,15 @@ fun HomeScreen(
         )
     }
     
-    // Alert dialog for permissions
-    if (uiState.needsPermissions) {
+    // Alert dialog for permissions (if denied)
+    if (uiState.needsPermissions && hasRequestedPermissions) {
         AlertDialog(
             onDismissRequest = { },
             title = { Text("Permissions Required") },
-            text = { Text("Please grant Bluetooth and location permissions to scan for devices.") },
+            text = { Text("Please grant all required permissions to scan for BLE devices. You need Bluetooth, Location, and Notification permissions.") },
             confirmButton = {
                 TextButton(onClick = {
-                    val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        arrayOf(
-                            Manifest.permission.BLUETOOTH_SCAN,
-                            Manifest.permission.BLUETOOTH_CONNECT
-                        )
-                    } else {
-                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-                    }
-                    permissionLauncher.launch(permissions)
+                    permissionLauncher.launch(requiredPermissions)
                 }) {
                     Text("Grant Permissions")
                 }
