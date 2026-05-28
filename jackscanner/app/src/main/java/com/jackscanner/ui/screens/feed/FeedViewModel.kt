@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.jackscanner.domain.model.Detection
 import com.jackscanner.domain.repository.DetectionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -31,12 +32,15 @@ class FeedViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(FeedUiState())
     val uiState: StateFlow<FeedUiState> = _uiState.asStateFlow()
     
+    private var loadJob: Job? = null
+    
     init {
-        loadDetections()
+        observeDetections()
     }
     
-    private fun loadDetections() {
-        viewModelScope.launch {
+    private fun observeDetections() {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
             detectionRepository.getAllDetections().collect { detections ->
@@ -49,8 +53,10 @@ class FeedViewModel @Inject constructor(
     }
     
     fun setFilter(filter: DetectionFilter) {
-        _uiState.update { it.copy(selectedFilter = filter) }
-        loadDetections()
+        if (_uiState.value.selectedFilter != filter) {
+            _uiState.update { it.copy(selectedFilter = filter) }
+            // The collect will automatically apply the new filter
+        }
     }
     
     private fun filterDetections(detections: List<Detection>, filter: DetectionFilter): List<Detection> {

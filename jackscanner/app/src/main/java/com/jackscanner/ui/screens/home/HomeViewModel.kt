@@ -7,7 +7,9 @@ import com.jackscanner.domain.model.Detection
 import com.jackscanner.domain.model.ScannerStatus
 import com.jackscanner.domain.repository.DetectionRepository
 import com.jackscanner.service.BleScanService
+import com.jackscanner.service.ScanController
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,7 +28,8 @@ data class HomeUiState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val detectionRepository: DetectionRepository,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val scanController: ScanController
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -80,8 +83,11 @@ class HomeViewModel @Inject constructor(
     }
     
     fun toggleScanning() {
-        // This will be handled by the service through intents
-        // The actual implementation is in MainActivity
+        if (BleScanService.isRunning) {
+            scanController.stopScanning()
+        } else {
+            scanController.startScanning()
+        }
     }
     
     fun refreshData() {
