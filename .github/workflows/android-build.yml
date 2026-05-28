@@ -1,0 +1,59 @@
+name: Android APK Build
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      # Checkout repository
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # Setup Java
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      # Validate Gradle wrapper
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v3
+
+      # Setup Android SDK automatically
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # Make gradlew executable
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # Clean project
+      - name: Clean project
+        run: ./gradlew clean
+
+      # Build Debug APK
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      # Upload APK artifact
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: |
+            app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
