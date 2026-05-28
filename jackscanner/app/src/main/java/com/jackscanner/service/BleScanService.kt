@@ -141,8 +141,14 @@ class BleScanService : Service() {
     private fun startScanning() {
         if (isScanning) return
         
-        startForeground(NOTIFICATION_ID, createServiceNotification())
-        
+        try {
+            startForeground(NOTIFICATION_ID, createServiceNotification())
+        } catch (e: Exception) {
+            android.util.Log.e("BleScanService", "Failed to start foreground: ${e.message}")
+            stopSelf()
+            return
+        }
+
         isScanning = true
         isRunning = true
         status = ScannerStatus.SCANNING
