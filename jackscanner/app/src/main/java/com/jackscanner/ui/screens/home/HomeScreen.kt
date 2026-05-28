@@ -1,5 +1,11 @@
 package com.jackscanner.ui.screens.home
 
+import android.Manifest
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -17,10 +23,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.core.content.ContextCompat
 import com.jackscanner.domain.model.Detection
 import com.jackscanner.domain.model.ScannerStatus
 import com.jackscanner.ui.components.GlassCard
@@ -37,6 +45,101 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val colors = BlueMeanieTheme.colors
+    val context = LocalContext.current
+    
+    // Permission launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.entries.all { it.value }
+        if (allGranted) {
+            viewModel.onPermissionsGranted()
+        }
+    }
+    
+    // Set up callbacks
+    LaunchedEffect(Unit) {
+        viewModel.setCallbacks(
+            onBluetoothCheck = {
+                // Open Bluetooth settings
+                try {
+                    val intent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
+                    context.startActivity(intent)
+                } catch (e: Exception) {
+                    // Fallback to general settings
+                    val intent = Intent(Settings.ACTION_SETTINGS)
+                    context.startActivity(intent)
+                }
+            },
+            onPermissionsCheck = {
+                val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    arrayOf(
+                        Manifest.permission.BLUETOOTH_SCAN,
+                        Manifest.permission.BLUETOOTH_CONNECT
+                    )
+                } else {
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+                }
+                permissionLauncher.launch(permissions)
+            }
+        )
+    }
+    
+    // Alert dialog for Bluetooth
+    if (uiState.needsBluetoothEnable) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("Bluetooth Required") },
+            text = { Text("Please enable Bluetooth to scan for devices.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    try {
+                        val intent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        val intent = Intent(Settings.ACTION_SETTINGS)
+                        context.startActivity(intent)
+                    }
+                }) {
+                    Text("Open Settings")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    
+    // Alert dialog for permissions
+    if (uiState.needsPermissions) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("Permissions Required") },
+            text = { Text("Please grant Bluetooth and location permissions to scan for devices.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        arrayOf(
+                            Manifest.permission.BLUETOOTH_SCAN,
+                            Manifest.permission.BLUETOOTH_CONNECT
+                        )
+                    } else {
+                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+                    }
+                    permissionLauncher.launch(permissions)
+                }) {
+                    Text("Grant Permissions")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
     
     LazyColumn(
         modifier = Modifier
