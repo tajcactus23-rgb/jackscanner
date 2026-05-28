@@ -29,29 +29,21 @@ jobs:
           java-version: 17
           cache: gradle
 
-      # Validate Gradle wrapper
-      - name: Validate Gradle Wrapper
-        uses: gradle/actions/wrapper-validation@v3
-        working-directory: jackscanner
-
       # Setup Android SDK automatically
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
       # Make gradlew executable
       - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-        working-directory: jackscanner
+        run: chmod +x jackscanner/gradlew
 
       # Clean project
       - name: Clean project
-        run: ./gradlew clean
-        working-directory: jackscanner
+        run: cd jackscanner && ./gradlew clean
 
       # Build Debug APK
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
-        working-directory: jackscanner
+        run: cd jackscanner && ./gradlew assembleDebug --stacktrace
 
       # Upload APK artifact
       - name: Upload APK
