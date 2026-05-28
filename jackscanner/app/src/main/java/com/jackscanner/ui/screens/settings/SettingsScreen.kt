@@ -181,10 +181,6 @@ fun SettingsScreen(
             }
         }
 
-            // Secret dev access (tap version 5 times)
-            item {
-                SecretDevAccess(onDevAccess = onDevAccess)
-            }
     }
 }
 
