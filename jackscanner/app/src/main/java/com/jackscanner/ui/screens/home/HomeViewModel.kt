@@ -83,10 +83,15 @@ class HomeViewModel @Inject constructor(
     }
     
     fun toggleScanning() {
-        if (BleScanService.isRunning) {
-            scanController.stopScanning()
-        } else {
-            scanController.startScanning()
+        try {
+            if (BleScanService.isRunning) {
+                scanController.stopScanning()
+            } else {
+                scanController.startScanning()
+            }
+        } catch (e: Exception) {
+            // Log error - service might not be available
+            e.printStackTrace()
         }
     }
     

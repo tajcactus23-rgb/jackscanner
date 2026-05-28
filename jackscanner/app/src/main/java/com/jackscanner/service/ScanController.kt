@@ -10,17 +10,29 @@ import javax.inject.Singleton
 class ScanController @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    fun startScanning() {
-        val intent = Intent(context, BleScanService::class.java).apply {
-            action = BleScanService.ACTION_START_SCANNING
+    fun startScanning(): Boolean {
+        return try {
+            val intent = Intent(context, BleScanService::class.java).apply {
+                action = BleScanService.ACTION_START_SCANNING
+            }
+            context.startForegroundService(intent)
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
-        context.startForegroundService(intent)
     }
 
-    fun stopScanning() {
-        val intent = Intent(context, BleScanService::class.java).apply {
-            action = BleScanService.ACTION_STOP_SCANNING
+    fun stopScanning(): Boolean {
+        return try {
+            val intent = Intent(context, BleScanService::class.java).apply {
+                action = BleScanService.ACTION_STOP_SCANNING
+            }
+            context.startService(intent)
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
-        context.startService(intent)
     }
 }
