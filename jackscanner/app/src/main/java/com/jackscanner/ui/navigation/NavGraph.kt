@@ -12,7 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.jackscanner.ui.screens.community.CommunityScreen
 import com.jackscanner.ui.screens.dev.DevSettingsScreen
-import com.jackscanner.ui.screens.feed.FeedScreen
+import com.jackscanner.ui.screens.puzzle.PuzzleScreen
 import com.jackscanner.ui.screens.heatmap.HeatmapScreen
 import com.jackscanner.ui.screens.home.HomeScreen
 import com.jackscanner.ui.screens.onboarding.OnboardingScreen
@@ -63,12 +63,8 @@ fun BlueMeanieNavGraph(
             )
         }
 
-        composable(Screen.Feed.route) {
-            FeedScreen(
-                onDetectionClick = { detectionId ->
-                    navController.navigate(Screen.DetectionDetail.createRoute(detectionId))
-                }
-            )
+        composable(Screen.Puzzle.route) {
+            PuzzleScreen()
         }
 
         composable(Screen.Heatmap.route) {
