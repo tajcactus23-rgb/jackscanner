@@ -3,9 +3,11 @@ package com.jackscanner.ui.screens.puzzle
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jackscanner.data.network.BitcoinApiService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -24,7 +26,9 @@ data class PuzzleUiState(
     val outputLog: String = "",
     val realPuzzles: List<RealPuzzleData> = emptyList(),
     val totalBtcRecovered: Double = 0.0,
-    val totalChecks: Long = 0L
+    val totalChecks: Long = 0L,
+    val isOnline: Boolean = true,
+    val networkError: String? = null
 )
 
 enum class PuzzleMethod(val displayName: String, val description: String) {
@@ -42,8 +46,10 @@ data class PuzzleResult(
     val timestamp: Long,
     val value: BigInteger,
     val found: Boolean,
+    val address: String = "",
     val btcBalance: Double = 0.0,
     val txCount: Int = 0,
+    val error: String? = null,
     val log: String = ""
 )
 
@@ -63,21 +69,22 @@ enum class PuzzleStatus {
 
 @HiltViewModel
 class PuzzleViewModel @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val bitcoinApi: BitcoinApiService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PuzzleUiState())
     val uiState: StateFlow<PuzzleUiState> = _uiState.asStateFlow()
 
+    private var searchJob: Job? = null
+
     init {
-        loadRealPuzzleData()
+        loadKnownPuzzles()
     }
 
-    private fun loadRealPuzzleData() {
+    private fun loadKnownPuzzles() {
         viewModelScope.launch {
-            // Real Bitcoin puzzle addresses (known solved/active puzzles)
-            // These are actual blockchain data points from Bitcoin Puzzle challenges
-            val realData = listOf(
+            val known = listOf(
                 RealPuzzleData(1, "1BgGZ9tcN4JZ9kTSoi5dqF8KuFVyJSFsRH", 0.001, 2, System.currentTimeMillis() - 86400000, 1, PuzzleStatus.SOLVED),
                 RealPuzzleData(2, "1L3yupoWA2RdkeF8UzBgq3RM8g6i2Dq7qE", 0.001, 1, System.currentTimeMillis() - 172800000, 1, PuzzleStatus.SOLVED),
                 RealPuzzleData(3, "17rmQjFL8oL3J1sNvPJE5RXpVL3sVoL8xR", 0.001, 1, System.currentTimeMillis() - 259200000, 1, PuzzleStatus.SOLVED),
@@ -100,34 +107,35 @@ class PuzzleViewModel @Inject constructor(
                 RealPuzzleData(30000, "1MVCYGC4NY6G4awK3LbkBWgpqu4hJEmGqE", 25600.0, 5673, System.currentTimeMillis(), 12, PuzzleStatus.UNSOLVED)
             )
             
-            val totalBtc = realData.sumOf { it.btcBalance }
-            _uiState.update { it.copy(realPuzzles = realData, totalBtcRecovered = totalBtc) }
+            val totalBtc = known.sumOf { it.btcBalance }
+            _uiState.update { it.copy(realPuzzles = known, totalBtcRecovered = totalBtc) }
         }
     }
 
     fun setRange(start: Int, end: Int) {
-        _uiState.update { it.copy(startIndex = start, endIndex = end, results = emptyList()) }
+        _uiState.update { it.copy(startIndex = start, endIndex = end, results = emptyList(), networkError = null) }
     }
 
     fun setMethod(method: PuzzleMethod) {
-        _uiState.update { it.copy(selectedMethod = method, results = emptyList()) }
+        _uiState.update { it.copy(selectedMethod = method, results = emptyList(), networkError = null) }
     }
 
     fun startSearch() {
         if (_uiState.value.isSearching) return
 
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSearching = true, checkedCount = 0, results = emptyList(), progress = 0f, totalChecks = 0L) }
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            _uiState.update { it.copy(isSearching = true, checkedCount = 0, results = emptyList(), progress = 0f, totalChecks = 0L, networkError = null) }
 
             val state = _uiState.value
             val indices = generateIndices(state.startIndex, state.endIndex, state.selectedMethod)
             val total = indices.size
-            
+
             indices.forEachIndexed { idx, index ->
                 if (!_uiState.value.isSearching) return@launch
 
-                val result = withContext(Dispatchers.Default) {
-                    performRealCheck(index, state.selectedMethod)
+                val result = withContext(Dispatchers.IO) {
+                    performRealBlockchainCheck(index, state.selectedMethod)
                 }
 
                 _uiState.update {
@@ -136,10 +144,13 @@ class PuzzleViewModel @Inject constructor(
                         checkedCount = idx + 1,
                         progress = (idx + 1).toFloat() / total,
                         outputLog = result.log,
-                        results = (it.results + result).takeLast(100),
-                        totalChecks = it.totalChecks + 1
+                        results = (it.results + result).takeLast(50),
+                        totalChecks = it.totalChecks + 1,
+                        networkError = if (result.error != null) result.error else null
                     )
                 }
+
+                kotlinx.coroutines.delay(200)
             }
 
             _uiState.update { it.copy(isSearching = false, progress = 1f) }
@@ -147,7 +158,12 @@ class PuzzleViewModel @Inject constructor(
     }
 
     fun stopSearch() {
+        searchJob?.cancel()
         _uiState.update { it.copy(isSearching = false) }
+    }
+
+    fun clearResults() {
+        _uiState.update { it.copy(results = emptyList(), progress = 0f, outputLog = "", networkError = null) }
     }
 
     private fun generateIndices(start: Int, end: Int, method: PuzzleMethod): List<Int> {
@@ -163,7 +179,7 @@ class PuzzleViewModel @Inject constructor(
 
     private fun generateFibonacciIndices(start: Int, end: Int): List<Int> {
         val result = mutableListOf<Int>()
-        var a = 0; var b = 1
+        var a =  0; var b = 1
         while (a <= end) {
             if (a >= start) result.add(a)
             val temp = a + b; a = b; b = temp
@@ -202,36 +218,30 @@ class PuzzleViewModel @Inject constructor(
         return true
     }
 
-    private fun performRealCheck(index: Int, method: PuzzleMethod): PuzzleResult {
+    private suspend fun performRealBlockchainCheck(index: Int, method: PuzzleMethod): PuzzleResult {
         val value = BigInteger.valueOf(index.toLong())
+        val address = BitcoinApiService.indexToPuzzleAddress(index)
         val hex = value.toString(16).uppercase().padStart(16, '0')
-        
-        // Real blockchain lookup - in production this would call blockchain APIs
-        // For now, check against known puzzle addresses
-        val knownPuzzle = _uiState.value.realPuzzles.find { it.index == index }
-        
+
+        val blockchainResult = bitcoinApi.checkAddress(address)
+
         val log = buildString {
-            append("[${String.format("%05d", index)}] ${method.displayName} -> ")
-            append("0x$hex | ")
-            
-            if (knownPuzzle != null && knownPuzzle.status == PuzzleStatus.SOLVED) {
-                append("MATCH FOUND!
-")
-                append("  └ Address: ${knownPuzzle.address.take(12)}...${knownPuzzle.address.takeLast(6)}
-")
-                append("  └ Balance: ${knownPuzzle.btcBalance} BTC
-")
-                append("  └ Transactions: ${knownPuzzle.txCount}")
-            } else {
-                val reason = when(method) {
-                    PuzzleMethod.SEQUENTIAL -> "range scan"
-                    PuzzleMethod.RANDOM -> "random probe"
-                    PuzzleMethod.FIBONACCI -> "fib(${(index * 0.618).toInt()})"
-                    PuzzleMethod.FIBONACCI_SPIRAL -> "spiral(${(index * 1.618).toInt()})"
-                    PuzzleMethod.PRIMES -> "prime(${if(isPrime(index)) "Y" else "N"})"
-                    PuzzleMethod.CUSTOM -> "custom"
+            append("[${String.format("%05d", index)}] ${method.displayName} ")
+            append("0x$hex\n")
+            append("  addr: ${address.take(12)}...\n")
+
+            if (blockchainResult.found && blockchainResult.puzzle != null) {
+                val puzzle = blockchainResult.puzzle
+                if (puzzle.balance > 0) {
+                    append("  ✓ LIVE! Balance: ${puzzle.balance} BTC\n")
+                    append("  txns: ${puzzle.txCount} | last: ${formatTime(puzzle.lastActivity)}")
+                } else {
+                    append("  ○ Empty address (${puzzle.txCount} txns)")
                 }
-                append("NO MATCH ($reason)")
+            } else if (blockchainResult.error != null) {
+                append("  ✗ Network: ${blockchainResult.error}")
+            } else {
+                append("  ○ Checked (not in known puzzles)")
             }
         }
 
@@ -240,14 +250,23 @@ class PuzzleViewModel @Inject constructor(
             method = method,
             timestamp = System.currentTimeMillis(),
             value = value,
-            found = knownPuzzle?.status == PuzzleStatus.SOLVED,
-            btcBalance = knownPuzzle?.btcBalance ?: 0.0,
-            txCount = knownPuzzle?.txCount ?: 0,
+            found = blockchainResult.found && (blockchainResult.puzzle?.balance ?: 0.0) > 0,
+            address = address,
+            btcBalance = blockchainResult.puzzle?.balance ?: 0.0,
+            txCount = blockchainResult.puzzle?.txCount ?: 0,
+            error = blockchainResult.error,
             log = log
         )
     }
 
-    fun clearResults() {
-        _uiState.update { it.copy(results = emptyList(), progress = 0f) }
+    private fun formatTime(timestamp: Long): String {
+        val diff = System.currentTimeMillis() - timestamp
+        return when {
+            diff < 60000 -> "just now"
+            diff < 3600000 -> "${diff / 60000}m ago"
+            diff < 86400000 -> "${diff / 3600000}h ago"
+            diff < 604800000 -> "${diff / 86400000}d ago"
+            else -> "${diff / 604800000}w ago"
+        }
     }
 }
