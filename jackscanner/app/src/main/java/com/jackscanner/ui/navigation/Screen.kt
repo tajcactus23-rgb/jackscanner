@@ -35,7 +35,7 @@ sealed class Screen(
 
 val bottomNavItems = listOf(
     Screen.Home,
-    Screen.Feed,
+    Screen.Puzzle,
     Screen.Heatmap,
     Screen.Community,
     Screen.Scoreboard,

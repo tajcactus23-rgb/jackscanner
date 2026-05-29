@@ -241,3 +241,26 @@ object GlassTheme {
     val StatusSilver = Color(0xFFC0C0C0)
     val StatusBronze = Color(0xFFCD7F32)
 }
+// ============================================
+// SIREN THEME - Police Lights Style
+// ============================================
+object SirenTheme {
+    val Primary = Color(0xFFFF0040)      // Neon Red
+    val PrimaryVariant = Color(0xFFCC0033)
+    val Secondary = Color(0xFF0080FF)    // Neon Blue
+    val Background = Color(0xFF0A0A12)  // Dark near-black
+    val Surface = Color(0xFF12121A)
+    val SurfaceVariant = Color(0xFF1A1A25)
+    val Card = Color(0xFF0E0E16)
+    val TextPrimary = Color(0xFFFFFFFF)
+    val TextSecondary = Color(0xB3FFFFFF)
+    val TextTertiary = Color(0x66FFFFFF)
+    val AccentGlow = Color(0x66FF0040)   // Red glow
+    val Border = Color(0x26FF0040)
+    val StatusActive = Color(0xFFFF0040)
+    val StatusWarning = Color(0xFFFFFF00) // Yellow alert
+    val StatusDanger = Color(0xFFFF0040)
+    val StatusGold = Color(0xFFFFD700)
+    val StatusSilver = Color(0xFFC0C0C0)
+    val StatusBronze = Color(0xFFCD7F32)
+}

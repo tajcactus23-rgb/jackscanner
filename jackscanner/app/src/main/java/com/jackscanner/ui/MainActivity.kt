@@ -115,7 +115,7 @@ class MainActivity : ComponentActivity() {
             "heatmap" -> {
                 // Will be handled in navigation
             }
-            "feed" -> {
+            "puzzle" -> {
                 // Will be handled in navigation
             }
         }

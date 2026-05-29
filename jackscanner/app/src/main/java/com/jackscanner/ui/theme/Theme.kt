@@ -256,6 +256,26 @@ fun getThemeColors(theme: AppTheme): BlueMeanieColors {
             statusSilver = GlassTheme.StatusSilver,
             statusBronze = GlassTheme.StatusBronze
         )
+        AppTheme.SIREN -> BlueMeanieColors(
+            primary = SirenTheme.Primary,
+            primaryVariant = SirenTheme.PrimaryVariant,
+            secondary = SirenTheme.Secondary,
+            background = SirenTheme.Background,
+            surface = SirenTheme.Surface,
+            surfaceVariant = SirenTheme.SurfaceVariant,
+            card = SirenTheme.Card,
+            textPrimary = SirenTheme.TextPrimary,
+            textSecondary = SirenTheme.TextSecondary,
+            textTertiary = SirenTheme.TextTertiary,
+            accentGlow = SirenTheme.AccentGlow,
+            border = SirenTheme.Border,
+            statusActive = SirenTheme.StatusActive,
+            statusWarning = SirenTheme.StatusWarning,
+            statusDanger = SirenTheme.StatusDanger,
+            statusGold = SirenTheme.StatusGold,
+            statusSilver = SirenTheme.StatusSilver,
+            statusBronze = SirenTheme.StatusBronze
+        )
     }
 }
 
