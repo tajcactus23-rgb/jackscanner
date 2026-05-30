@@ -12,7 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.jackscanner.ui.screens.home.HomeScreen
-import com.jackscanner.ui.screens.settings.SettingsScreenLite
+import com.jackscanner.ui.screens.settings.SettingsScreen
 import com.jackscanner.ui.screens.settings.DetectionDetailScreen
 
 @Composable
