@@ -1,6 +1,7 @@
 package com.jackscanner.ui.screens.puzzle
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jackscanner.data.network.BitcoinApiService
@@ -28,7 +29,8 @@ data class PuzzleUiState(
     val totalBtcRecovered: Double = 0.0,
     val totalChecks: Long = 0L,
     val isOnline: Boolean = true,
-    val networkError: String? = null
+    val networkError: String? = null,
+    val payoutAddress: String = ""
 )
 
 enum class PuzzleMethod(val displayName: String, val description: String) {
@@ -73,7 +75,9 @@ class PuzzleViewModel @Inject constructor(
     private val bitcoinApi: BitcoinApiService
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(PuzzleUiState())
+    private val prefs: SharedPreferences = context.getSharedPreferences("puzzle_prefs", Context.MODE_PRIVATE)
+
+    private val _uiState = MutableStateFlow(PuzzleUiState(payoutAddress = prefs.getString("payout_address", "") ?: ""))
     val uiState: StateFlow<PuzzleUiState> = _uiState.asStateFlow()
 
     private var searchJob: Job? = null
@@ -106,10 +110,14 @@ class PuzzleViewModel @Inject constructor(
                 RealPuzzleData(25000, "1JKm1gaJ3X6qThJ3VU5JzS5a8hSMy6hT5P", 12800.0, 3892, System.currentTimeMillis(), 11, PuzzleStatus.UNSOLVED),
                 RealPuzzleData(30000, "1MVCYGC4NY6G4awK3LbkBWgpqu4hJEmGqE", 25600.0, 5673, System.currentTimeMillis(), 12, PuzzleStatus.UNSOLVED)
             )
-            
             val totalBtc = known.sumOf { it.btcBalance }
             _uiState.update { it.copy(realPuzzles = known, totalBtcRecovered = totalBtc) }
         }
+    }
+
+    fun setPayoutAddress(address: String) {
+        prefs.edit().putString("payout_address", address).apply()
+        _uiState.update { it.copy(payoutAddress = address) }
     }
 
     fun setRange(start: Int, end: Int) {
@@ -122,37 +130,22 @@ class PuzzleViewModel @Inject constructor(
 
     fun startSearch() {
         if (_uiState.value.isSearching) return
-
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             _uiState.update { it.copy(isSearching = true, checkedCount = 0, results = emptyList(), progress = 0f, totalChecks = 0L, networkError = null) }
-
             val state = _uiState.value
             val indices = generateIndices(state.startIndex, state.endIndex, state.selectedMethod)
             val total = indices.size
-
             indices.forEachIndexed { idx, index ->
                 if (!_uiState.value.isSearching) return@launch
-
-                val result = withContext(Dispatchers.IO) {
-                    performRealBlockchainCheck(index, state.selectedMethod)
-                }
-
+                val result = withContext(Dispatchers.IO) { performRealBlockchainCheck(index, state.selectedMethod) }
                 _uiState.update {
-                    it.copy(
-                        currentIndex = index,
-                        checkedCount = idx + 1,
-                        progress = (idx + 1).toFloat() / total,
-                        outputLog = result.log,
-                        results = (it.results + result).takeLast(50),
-                        totalChecks = it.totalChecks + 1,
-                        networkError = if (result.error != null) result.error else null
-                    )
+                    it.copy(currentIndex = index, checkedCount = idx + 1, progress = (idx + 1).toFloat() / total,
+                        outputLog = result.log, results = (it.results + result).takeLast(50),
+                        totalChecks = it.totalChecks + 1, networkError = if (result.error != null) result.error else null)
                 }
-
                 kotlinx.coroutines.delay(200)
             }
-
             _uiState.update { it.copy(isSearching = false, progress = 1f) }
         }
     }
@@ -160,10 +153,6 @@ class PuzzleViewModel @Inject constructor(
     fun stopSearch() {
         searchJob?.cancel()
         _uiState.update { it.copy(isSearching = false) }
-    }
-
-    fun clearResults() {
-        _uiState.update { it.copy(results = emptyList(), progress = 0f, outputLog = "", networkError = null) }
     }
 
     private fun generateIndices(start: Int, end: Int, method: PuzzleMethod): List<Int> {
@@ -179,11 +168,8 @@ class PuzzleViewModel @Inject constructor(
 
     private fun generateFibonacciIndices(start: Int, end: Int): List<Int> {
         val result = mutableListOf<Int>()
-        var a =  0; var b = 1
-        while (a <= end) {
-            if (a >= start) result.add(a)
-            val temp = a + b; a = b; b = temp
-        }
+        var a = 0; var b = 1
+        while (a <= end) { if (a >= start) result.add(a); val temp = a + b; a = b; b = temp }
         return result.ifEmpty { listOf(start) }
     }
 
@@ -191,20 +177,13 @@ class PuzzleViewModel @Inject constructor(
         val phi = 1.618033988749895
         val result = mutableListOf<Int>()
         var k = 1L
-        while (true) {
-            val index = (k * phi).toInt()
-            if (index > end) break
-            if (index >= start) result.add(index)
-            k++
-        }
+        while (true) { val index = (k * phi).toInt(); if (index > end) break; if (index >= start) result.add(index); k++ }
         return result.ifEmpty { listOf(start) }
     }
 
     private fun generatePrimeIndices(start: Int, end: Int): List<Int> {
         val result = mutableListOf<Int>()
-        for (i in start..end) {
-            if (isPrime(i)) result.add(i)
-        }
+        for (i in start..end) { if (isPrime(i)) result.add(i) }
         return result.ifEmpty { listOf(start) }
     }
 
@@ -212,9 +191,7 @@ class PuzzleViewModel @Inject constructor(
         if (n < 2) return false
         if (n == 2) return true
         if (n % 2 == 0) return false
-        for (i in 3..kotlin.math.sqrt(n.toDouble()).toInt() step 2) {
-            if (n % i == 0) return false
-        }
+        for (i in 3..kotlin.math.sqrt(n.toDouble()).toInt() step 2) { if (n % i == 0) return false }
         return true
     }
 
@@ -222,41 +199,23 @@ class PuzzleViewModel @Inject constructor(
         val value = BigInteger.valueOf(index.toLong())
         val address = BitcoinApiService.indexToPuzzleAddress(index)
         val hex = value.toString(16).uppercase().padStart(16, '0')
-
         val blockchainResult = bitcoinApi.checkAddress(address)
-
         val log = buildString {
-            append("[${String.format("%05d", index)}] ${method.displayName} ")
-            append("0x$hex\n")
+            append("[${String.format("%05d", index)}] ${method.displayName} 0x$hex\n")
             append("  addr: ${address.take(12)}...\n")
-
             if (blockchainResult.found && blockchainResult.puzzle != null) {
                 val puzzle = blockchainResult.puzzle
                 if (puzzle.balance > 0) {
-                    append("  ✓ LIVE! Balance: ${puzzle.balance} BTC\n")
+                    append("  LIVE! Balance: ${puzzle.balance} BTC\n")
                     append("  txns: ${puzzle.txCount} | last: ${formatTime(puzzle.lastActivity)}")
-                } else {
-                    append("  ○ Empty address (${puzzle.txCount} txns)")
-                }
-            } else if (blockchainResult.error != null) {
-                append("  ✗ Network: ${blockchainResult.error}")
-            } else {
-                append("  ○ Checked (not in known puzzles)")
-            }
+                } else { append("  Empty address (${puzzle.txCount} txns)") }
+            } else if (blockchainResult.error != null) { append("  Error: ${blockchainResult.error}") }
+            else { append("  Checked (not in known puzzles)") }
         }
-
-        return PuzzleResult(
-            index = index,
-            method = method,
-            timestamp = System.currentTimeMillis(),
-            value = value,
+        return PuzzleResult(index = index, method = method, timestamp = System.currentTimeMillis(), value = value,
             found = blockchainResult.found && (blockchainResult.puzzle?.balance ?: 0.0) > 0,
-            address = address,
-            btcBalance = blockchainResult.puzzle?.balance ?: 0.0,
-            txCount = blockchainResult.puzzle?.txCount ?: 0,
-            error = blockchainResult.error,
-            log = log
-        )
+            address = address, btcBalance = blockchainResult.puzzle?.balance ?: 0.0,
+            txCount = blockchainResult.puzzle?.txCount ?: 0, error = blockchainResult.error, log = log)
     }
 
     private fun formatTime(timestamp: Long): String {
