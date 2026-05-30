@@ -1,0 +1,99 @@
+name: Android Emulator Test
+
+on:
+  push:
+    branches: [ fix/build-improvements, lite-version ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+        restore-keys: ${{ runner.os }}-gradle-
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x jackscanner/gradlew
+
+    - name: Build Full Debug APK
+      run: cd jackscanner && ./gradlew assembleFullDebug --no-daemon
+
+    - name: Build Lite Debug APK
+      run: cd jackscanner && ./gradlew assembleLiteDebug --no-daemon
+
+    - name: Set up test reports directory
+      run: mkdir -p test-results
+
+    - name: Run instrumented tests with emulator
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 34
+        target: google_apis
+        arch: x86_64
+        profile: Nexus 6
+        script: |
+          cd /home/user
+          # Wait for emulator to boot
+          adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
+          adb shell input keyevent 82
+          sleep 5
+          # Install full APK
+          cd jackscanner
+          ./gradlew installFullDebug
+          # Launch the app
+          adb shell am start -n com.jackscanner/com.jackscanner.ui.MainActivity
+          sleep 10
+          # Check if app is running
+          adb shell dumpsys activity activities | grep -i com.jackscanner || echo "App not found"
+          # Get screenshot
+          adb exec-out screencap -p > test-results/home_screen.png || echo "Screenshot failed"
+          # Log output
+          adb logcat -d -t 100 > test-results/logcat.txt || echo "Logcat failed"
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: test-results/
+
+    - name: Upload Full APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: full-apk
+        path: jackscanner/app/build/outputs/apk/full/debug/*.apk
+
+    - name: Upload Lite APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: lite-apk
+        path: jackscanner/app/build/outputs/apk/lite/debug/*.apk
+
+    - name: Check for crashes
+      run: |
+        if grep -q "FATAL\|CRASH\|Exception" test-results/logcat.txt; then
+          echo "Found crashes in logcat"
+          grep -A 5 "FATAL\|CRASH\|Exception" test-results/logcat.txt || true
+          exit 1
+        else
+          echo "No crashes found"
+        fi
