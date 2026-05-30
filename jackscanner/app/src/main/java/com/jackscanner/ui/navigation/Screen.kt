@@ -16,7 +16,7 @@ sealed class Screen(
     val icon: ImageVector
 ) {
     object Home : Screen("home", "Home", Icons.Default.Home)
-    object Puzzle : Screen("puzzle", "Puzzle", Icons.Default.Extension)
+    object Puzzle : Screen("puzzle", "Puzzle", Icons.Default.Build)
     object Heatmap : Screen("heatmap", "Heatmap", Icons.Default.Map)
     object Community : Screen("community", "Community", Icons.Default.People)
     object Scoreboard : Screen("scoreboard", "Scoreboard", Icons.Default.Star)

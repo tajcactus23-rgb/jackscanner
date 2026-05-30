@@ -78,12 +78,12 @@ fun PuzzleScreen(viewModel: PuzzleViewModel = hiltViewModel()) {
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.weight(1f)) {
+                    Column(modifier = Modifier.weight(1f).padding(2.dp)) {
                         Text("START", color = Color.White.copy(alpha = 0.6f), fontSize = 10.sp)
                         Slider(value = uiState.startIndex.toFloat(), onValueChange = { viewModel.setRange(it.toInt(), uiState.endIndex) }, valueRange = 0f..30000f, colors = SliderDefaults.colors(thumbColor = NeonBlue, activeTrackColor = NeonBlue))
                     }
                     Spacer(modifier = Modifier.width(16.dp))
-                    Column(modifier = Modifier.weight(1f)) {
+                    Column(modifier = Modifier.weight(1f).padding(2.dp)) {
                         Text("END", color = Color.White.copy(alpha = 0.6f), fontSize = 10.sp)
                         Slider(value = uiState.endIndex.toFloat(), onValueChange = { viewModel.setRange(uiState.startIndex, it.toInt()) }, valueRange = 0f..30000f, colors = SliderDefaults.colors(thumbColor = NeonRed, activeTrackColor = NeonRed))
                     }
@@ -115,7 +115,7 @@ fun PuzzleScreen(viewModel: PuzzleViewModel = hiltViewModel()) {
 
         if (uiState.isSearching || uiState.progress > 0) {
             Spacer(modifier = Modifier.height(12.dp))
-            LinearProgressIndicator(progress = { uiState.progress }, modifier = Modifier.fillMaxWidth().height(8.dp), color = NeonRed, trackColor = NeonDark)
+            LinearProgressIndicator(progress = uiState.progress, modifier = Modifier.fillMaxWidth().height(8.dp), color = NeonRed, trackColor = NeonDark)
         }
 
         Card(modifier = Modifier.fillMaxWidth().height(160.dp).padding(vertical = 12.dp).shadow(12.dp, RoundedCornerShape(12.dp)), colors = CardDefaults.cardColors(containerColor = Color(0xFF050508)), border = BorderStroke(1.dp, if (uiState.results.lastOrNull()?.found == true) NeonRed.copy(alpha = 0.8f) else NeonBlue.copy(alpha = 0.3f))) {
@@ -154,7 +154,7 @@ fun PuzzleScreen(viewModel: PuzzleViewModel = hiltViewModel()) {
                             Text("#${puzzle.index}", color = statusColor, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                         Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(modifier = Modifier.weight(1f).padding(2.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(statusLabel, color = statusColor, fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.background(statusColor.copy(alpha = 0.2f), RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -186,7 +186,7 @@ private fun MethodChip(method: PuzzleMethod, selected: Boolean, disabled: Boolea
         selected -> NeonPurple
         else -> NeonDark
     }
-    Surface(onClick = { if (!disabled) onClick() }, modifier = Modifier.weight(1f), color = bgColor.copy(alpha = if (selected) 1f else 0.3f), shape = RoundedCornerShape(8.dp), border = BorderStroke(1.dp, bgColor.copy(alpha = if (selected) 1f else 0.3f))) {
+    Surface(onClick = { if (!disabled) onClick() }, modifier = Modifier.fillMaxWidth(), color = bgColor.copy(alpha = if (selected) 1f else 0.3f), shape = RoundedCornerShape(8.dp), border = BorderStroke(1.dp, bgColor.copy(alpha = if (selected) 1f else 0.3f))) {
         Text(text = method.displayName, color = if (selected) Color.White else Color.White.copy(alpha = 0.6f), fontSize = 10.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.padding(vertical = 8.dp), letterSpacing = 1.sp)
     }
 }
