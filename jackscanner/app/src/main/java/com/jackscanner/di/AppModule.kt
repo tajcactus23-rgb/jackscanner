@@ -3,6 +3,7 @@ package com.jackscanner.di
 import com.google.gson.Gson
 import com.jackscanner.data.repository.CommunityRepositoryImpl
 import com.jackscanner.data.repository.DetectionRepositoryImpl
+import com.jackscanner.data.network.BitcoinApiService
 import com.jackscanner.data.repository.UserRepositoryImpl
 import com.jackscanner.domain.repository.CommunityRepository
 import com.jackscanner.domain.repository.DetectionRepository
@@ -44,4 +45,8 @@ object AppModule {
     @Provides
     @Singleton
     fun provideGson(): Gson = Gson()
+    
+    @Provides
+    @Singleton
+    fun provideBitcoinApiService(): BitcoinApiService = BitcoinApiService()
 }
