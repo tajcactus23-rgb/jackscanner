@@ -1,31 +1,47 @@
-name: Android Build
+name: Android Build (Full & Lite)
 
 on:
   push:
-    branches: [ fix/build-improvements ]
+    branches: [ lite-version, main, fix/build-improvements ]
   workflow_dispatch:
 
 jobs:
-  build:
+  build-full:
     runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v4
-    
     - name: Setup JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-    
     - name: Setup Android SDK
       uses: android-actions/setup-android@v2
-    
-    - name: Build Debug APK
-      run: cd jackscanner && ./gradlew assembleDebug --no-daemon
-    
-    - name: Upload Debug APK
+    - name: Build Full Debug APK
+      run: cd jackscanner && ./gradlew assembleFullDebug --no-daemon
+    - name: Upload Full APK
       uses: actions/upload-artifact@v4
       with:
-        name: debug-apk
-        path: jackscanner/app/build/outputs/apk/debug/app-debug.apk
+        name: jackscanner-full-debug
+        path: jackscanner/app/build/outputs/apk/full/debug/app-full-debug.apk
+
+  build-lite:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    - name: Build Lite Debug APK
+      run: cd jackscanner && ./gradlew assembleLiteDebug --no-daemon
+    - name: Upload Lite APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: jackscanner-lite-debug
+        path: jackscanner/app/build/outputs/apk/lite/debug/app-lite-debug.apk

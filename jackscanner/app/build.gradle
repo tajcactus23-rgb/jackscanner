@@ -33,6 +33,20 @@ android {
         }
     }
 
+    flavorDimensions += "version"
+    productFlavors {
+        full {
+            dimension "version"
+            applicationIdSuffix ""
+            versionNameSuffix "-full"
+        }
+        lite {
+            dimension "version"
+            applicationIdSuffix ".lite"
+            versionNameSuffix "-lite"
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
