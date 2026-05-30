@@ -166,7 +166,7 @@ fun PuzzleScreen(viewModel: PuzzleViewModel = hiltViewModel()) {
                         Text("OUTPUT", color = NeonBlue, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 2.sp)
                         if (uiState.isSearching) { Box(modifier = Modifier.size(8.dp).background(NeonRed, RoundedCornerShape(4.dp))) }
                     }
-                    HorizontalDivider(color = NeonBlue.copy(alpha = 0.2f), modifier = Modifier.padding(vertical = 4.dp))
+                    Divider(color = NeonBlue.copy(alpha = 0.2f), modifier = Modifier.padding(vertical = 4.dp))
                     Text(text = uiState.outputLog.ifEmpty { "> Waiting for scan...\n> Select range and method above\n> Press START to begin" }, color = if (uiState.outputLog.contains("MATCH")) NeonRed else Color(0xFF00FF00), fontFamily = FontFamily.Monospace, fontSize = 11.sp, modifier = Modifier.verticalScroll(rememberScrollState()))
                 }
             }
