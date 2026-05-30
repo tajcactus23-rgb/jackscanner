@@ -50,7 +50,7 @@ fun NavGraphLite(
         }
 
         composable("settings") {
-            SettingsScreenLite()
+            SettingsScreen()
         }
 
         composable(
