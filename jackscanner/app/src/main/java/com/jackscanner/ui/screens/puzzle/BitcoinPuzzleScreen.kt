@@ -23,6 +23,7 @@ import com.jackscanner.ui.theme.BlueMeanieTheme
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BitcoinPuzzleScreen(
     viewModel: BitcoinPuzzleViewModel = hiltViewModel()
@@ -413,7 +414,7 @@ private fun ResultsCard(uiState: PuzzleUiState) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (uiState.foundKey != null) colors.statusSuccess.copy(alpha = 0.2f)
+            containerColor = if (uiState.foundKey != null) colors.statusActive.copy(alpha = 0.2f)
             else colors.surface
         )
     ) {
@@ -430,14 +431,14 @@ private fun ResultsCard(uiState: PuzzleUiState) {
                     Icon(
                         Icons.Default.CheckCircle,
                         contentDescription = null,
-                        tint = colors.statusSuccess
+                        tint = colors.statusActive
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "KEY FOUND!",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = colors.statusSuccess
+                        color = colors.statusActive
                     )
                 }
                 
@@ -512,7 +513,7 @@ private fun VisualizationCard(uiState: PuzzleUiState) {
                     )
                 }
             } else {
-                Column(
+                LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier.heightIn(max = 300.dp)
                 ) {
@@ -531,7 +532,7 @@ private fun CheckResultRow(check: CheckResult) {
     val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
     
     val (bgColor, icon, textColor) = when (check.result) {
-        CheckOutcome.FOUND_ACTIVE -> Triple(colors.statusSuccess.copy(alpha = 0.3f), Icons.Default.EmojiEvents, colors.statusSuccess)
+        CheckOutcome.FOUND_ACTIVE -> Triple(colors.statusActive.copy(alpha = 0.3f), Icons.Default.EmojiEvents, colors.statusActive)
         CheckOutcome.HAS_BALANCE -> Triple(colors.statusWarning.copy(alpha = 0.3f), Icons.Default.AttachMoney, colors.statusWarning)
         CheckOutcome.EMPTY -> Triple(colors.background, Icons.Default.RemoveCircleOutline, colors.textTertiary)
         CheckOutcome.ERROR -> Triple(colors.statusDanger.copy(alpha = 0.2f), Icons.Default.Error, colors.statusDanger)
