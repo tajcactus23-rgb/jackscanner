@@ -112,7 +112,8 @@ enum class AppTheme(val displayName: String) {
     MIDNIGHT("Midnight"),
     QUANTUM("Quantum"),
     NOVA("Nova"),
-    GLASS("Glass")
+    GLASS("Glass"),
+    SIREN("Siren")
 }
 
 /**

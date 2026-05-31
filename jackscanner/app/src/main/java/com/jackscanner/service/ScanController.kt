@@ -11,22 +11,29 @@ import javax.inject.Singleton
 class ScanController @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    fun startScanning(checkBluetooth: Boolean = true) {
-        val intent = Intent(context, BleScanService::class.java).apply {
-            action = BleScanService.ACTION_START_SCANNING
-            putExtra("checkBluetooth", checkBluetooth)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    fun startScanning(): Boolean {
+        return try {
+            val intent = Intent(context, BleScanService::class.java).apply {
+                action = BleScanService.ACTION_START_SCANNING
+            }
             context.startForegroundService(intent)
-        } else {
-            context.startService(intent)
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
     }
 
-    fun stopScanning() {
-        val intent = Intent(context, BleScanService::class.java).apply {
-            action = BleScanService.ACTION_STOP_SCANNING
+    fun stopScanning(): Boolean {
+        return try {
+            val intent = Intent(context, BleScanService::class.java).apply {
+                action = BleScanService.ACTION_STOP_SCANNING
+            }
+            context.startService(intent)
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
-        context.startService(intent)
     }
 }

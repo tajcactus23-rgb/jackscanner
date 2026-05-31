@@ -1,55 +1,80 @@
-name: Android APK Build
+name: Android Build (Full & Lite)
 
 on:
   push:
-    branches:
-      - main
-      - master
-  pull_request:
+    branches: [ lite-version, main, fix/build-improvements ]
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build APK
+  build-full:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    - name: Build Full Debug APK
+      run: cd jackscanner && ./gradlew assembleFullDebug --no-daemon
+    - name: Upload Full APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: jackscanner-full-debug
+        path: jackscanner/app/build/outputs/apk/full/debug/app-full-debug.apk
+
+  build-lite:
+    runs-on: ubuntu-latest
 
     steps:
-      # Checkout repository
-      - name: Checkout source
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    - name: Setup JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    - name: Build Lite Debug APK
+      run: cd jackscanner && ./gradlew assembleLiteDebug --no-daemon
+    - name: Upload Lite APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: jackscanner-lite-debug
+        path: jackscanner/app/build/outputs/apk/lite/debug/app-lite-debug.apk
 
-      # Setup Java
-      - name: Setup JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-          cache: gradle
+  build-emulator-test:
+    runs-on: ubuntu-latest
 
-      # Setup Android SDK automatically
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+    steps:
+    - uses: actions/checkout@v4
 
-      # Make gradlew executable
-      - name: Grant execute permission for gradlew
-        run: chmod +x jackscanner/gradlew
+    - name: Setup JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 17
+        cache: gradle
 
-      # Clean project
-      - name: Clean project
-        run: cd jackscanner && ./gradlew clean
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
 
-      # Build Debug APK
-      - name: Build Debug APK
-        run: cd jackscanner && ./gradlew assembleDebug --stacktrace
+    - name: Grant execute permission for gradlew
+      run: chmod +x jackscanner/gradlew
 
-      # Upload APK artifact
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-apk
-          path: |
-            jackscanner/app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
+    - name: Clean project
+      run: cd jackscanner && ./gradlew clean
+
+    - name: Build Debug APK
+      run: cd jackscanner && ./gradlew assembleDebug --stacktrace
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-apk
+        path: |
+          jackscanner/app/build/outputs/apk/debug/*.apk
+        if-no-files-found: error

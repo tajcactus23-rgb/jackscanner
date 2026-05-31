@@ -13,7 +13,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -26,10 +25,8 @@ import com.jackscanner.R
 import com.jackscanner.data.preferences.PreferencesManager
 import com.jackscanner.ui.navigation.BlueMeanieNavGraph
 import com.jackscanner.ui.navigation.Screen
-import com.jackscanner.ui.navigation.bottomNavItems
 import com.jackscanner.service.BleScanService
 import com.jackscanner.ui.theme.BlueMeanieTheme
-import com.jackscanner.ui.theme.getThemeColors
 import com.jackscanner.domain.model.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
@@ -81,16 +78,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        
+
         setContent {
             var appTheme by remember { mutableStateOf(AppTheme.BLUE_MEANIE_CLASSIC) }
-            
+
             LaunchedEffect(Unit) {
                 preferencesManager.selectedTheme.collect { theme ->
                     appTheme = theme
                 }
             }
-            
+
             BlueMeanieTheme(appTheme = appTheme) {
                 MainContent(
                     onStartScan = { checkBluetoothState() },
@@ -98,27 +95,10 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
-        
-        // Handle navigation from notification
-        handleNotificationIntent()
     }
 
     override fun onResume() {
         super.onResume()
-        handleNotificationIntent()
-    }
-
-    private fun handleNotificationIntent() {
-        val navigateTo = intent.getStringExtra("navigate")
-        // Handle navigation from notification actions
-        when (navigateTo) {
-            "heatmap" -> {
-                // Will be handled in navigation
-            }
-            "feed" -> {
-                // Will be handled in navigation
-            }
-        }
     }
 
     private fun checkBluetoothState() {
@@ -162,23 +142,20 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainContent(
     onStartScan: () -> Unit,
     preferencesManager: PreferencesManager
 ) {
     val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-    
+
     var showOnboarding by remember { mutableStateOf(false) }
-    
+
     LaunchedEffect(Unit) {
         val onboardingCompleted = preferencesManager.onboardingCompleted.first()
         showOnboarding = !onboardingCompleted
     }
-    
+
     LaunchedEffect(showOnboarding) {
         if (showOnboarding) {
             navController.navigate(Screen.Onboarding.route) {
@@ -186,56 +163,13 @@ private fun MainContent(
             }
         }
     }
-    
+
     val startDestination = if (showOnboarding) Screen.Onboarding.route else Screen.Home.route
-    
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-            if (currentRoute in bottomNavItems.map { it.route }) {
-                NavigationBar(
-                    containerColor = com.jackscanner.ui.theme.BlueMeanieTheme.colors.surface,
-                    contentColor = com.jackscanner.ui.theme.BlueMeanieTheme.colors.primary
-                ) {
-                    bottomNavItems.forEach { screen ->
-                        val selected = currentRoute == screen.route
-                        NavigationBarItem(
-                            icon = { Icon(screen.icon, contentDescription = screen.title) },
-                            label = { Text(screen.title) },
-                            selected = selected,
-                            onClick = {
-                                if (currentRoute != screen.route) {
-                                    navController.navigate(screen.route) {
-                                        popUpTo(Screen.Home.route) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = com.jackscanner.ui.theme.BlueMeanieTheme.colors.primary,
-                                selectedTextColor = com.jackscanner.ui.theme.BlueMeanieTheme.colors.primary,
-                                unselectedIconColor = com.jackscanner.ui.theme.BlueMeanieTheme.colors.textTertiary,
-                                unselectedTextColor = com.jackscanner.ui.theme.BlueMeanieTheme.colors.textTertiary,
-                                indicatorColor = com.jackscanner.ui.theme.BlueMeanieTheme.colors.primary.copy(alpha = 0.2f)
-                            )
-                        )
-                    }
-                }
-            }
-        }
-    ) { paddingValues ->
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            BlueMeanieNavGraph(
-                navController = navController,
-                startDestination = startDestination
-            )
-        }
+
+    Surface(modifier = Modifier.fillMaxSize()) {
+        BlueMeanieNavGraph(
+            navController = navController,
+            startDestination = startDestination
+        )
     }
 }

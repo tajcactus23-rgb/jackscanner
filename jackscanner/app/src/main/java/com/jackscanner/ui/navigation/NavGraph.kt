@@ -10,14 +10,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.jackscanner.ui.screens.community.CommunityScreen
-import com.jackscanner.ui.screens.dev.DevSettingsScreen
-
-import com.jackscanner.ui.screens.heatmap.HeatmapScreen
 import com.jackscanner.ui.screens.home.HomeScreen
 import com.jackscanner.ui.screens.onboarding.OnboardingScreen
-import com.jackscanner.ui.screens.puzzle.BitcoinPuzzleScreen
-import com.jackscanner.ui.screens.scoreboard.ScoreboardScreen
 import com.jackscanner.ui.screens.settings.SettingsScreen
 import com.jackscanner.ui.screens.settings.DetectionDetailScreen
 
@@ -29,83 +23,28 @@ fun BlueMeanieNavGraph(
     NavHost(
         navController = navController,
         startDestination = startDestination,
-        enterTransition = {
-            fadeIn(animationSpec = tween(300)) +
-            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(300))
-        },
-        exitTransition = {
-            fadeOut(animationSpec = tween(300)) +
-            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(300))
-        },
-        popEnterTransition = {
-            fadeIn(animationSpec = tween(300)) +
-            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300))
-        },
-        popExitTransition = {
-            fadeOut(animationSpec = tween(300)) +
-            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300))
-        }
+        enterTransition = { fadeIn(animationSpec = tween(300)) + slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(300)) },
+        exitTransition = { fadeOut(animationSpec = tween(300)) + slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(300)) },
+        popEnterTransition = { fadeIn(animationSpec = tween(300)) + slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300)) },
+        popExitTransition = { fadeOut(animationSpec = tween(300)) + slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300)) }
     ) {
         composable(Screen.Onboarding.route) {
-            OnboardingScreen(
-                onComplete = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Onboarding.route) { inclusive = true }
-                    }
-                }
-            )
+            OnboardingScreen(onComplete = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Onboarding.route) { inclusive = true } } })
         }
-
         composable(Screen.Home.route) {
             HomeScreen(
-                onDetectionClick = { detectionId ->
-                    navController.navigate(Screen.DetectionDetail.createRoute(detectionId))
-                }
+                onDetectionClick = { detectionId -> navController.navigate(Screen.DetectionDetail.createRoute(detectionId)) },
+                onSettingsClick = { navController.navigate(Screen.Settings.route) }
             )
         }
-
-        composable(Screen.Puzzle.route) {
-            BitcoinPuzzleScreen()
-        }
-
-        composable(Screen.Heatmap.route) {
-            HeatmapScreen()
-        }
-
-        composable(Screen.Community.route) {
-            CommunityScreen()
-        }
-
-        composable(Screen.Scoreboard.route) {
-            ScoreboardScreen()
-        }
-
         composable(Screen.Settings.route) {
-            SettingsScreen(
-                onDevAccess = {
-                    navController.navigate(Screen.DevSettings.route)
-                }
-            )
+            SettingsScreen(onDevAccess = { navController.navigate("dev_settings") })
         }
-
-        composable(
-            route = Screen.DetectionDetail.route,
-            arguments = listOf(
-                navArgument("detectionId") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
-            val detectionId = backStackEntry.arguments?.getString("detectionId") ?: ""
-            DetectionDetailScreen(
-                detectionId = detectionId,
-                onBack = { navController.popBackStack() }
-            )
+        composable(route = "detection/{detectionId}", arguments = listOf(navArgument("detectionId") { type = NavType.StringType })) { backStackEntry ->
+            DetectionDetailScreen(detectionId = backStackEntry.arguments?.getString("detectionId") ?: "", onBack = { navController.popBackStack() })
         }
-        
-        // Dev Settings Screen (hidden, accessed via tap version 5 times)
-        composable(Screen.DevSettings.route) {
-            DevSettingsScreen(
-                onBack = { navController.popBackStack() }
-            )
+        composable("dev_settings") {
+            com.jackscanner.ui.screens.dev.DevSettingsScreen(onBack = { navController.popBackStack() })
         }
     }
 }
