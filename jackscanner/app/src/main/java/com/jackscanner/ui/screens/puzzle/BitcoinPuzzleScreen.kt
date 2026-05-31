@@ -25,6 +25,7 @@ import com.jackscanner.ui.theme.BlueMeanieTheme
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BitcoinPuzzleScreen(
     viewModel: BitcoinPuzzleViewModel = hiltViewModel()
@@ -514,7 +515,7 @@ private fun VisualizationCard(uiState: PuzzleUiState) {
                     )
                 }
             } else {
-                Column(
+                LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier.heightIn(max = 300.dp)
                 ) {
