@@ -1,5 +1,11 @@
 package com.jackscanner.ui.screens.home
 
+import android.Manifest
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,6 +25,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,6 +48,128 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val colors = BlueMeanieTheme.colors
 
+    val context = LocalContext.current
+    
+    // Permission step tracking
+    var currentPermissionStep by remember { mutableIntStateOf(0) }
+    
+    // Define permission steps (requests one at a time)
+    val permissionSteps = listOf(
+        PermissionStep(
+            permission = Manifest.permission.ACCESS_FINE_LOCATION,
+            title = "Location Required",
+            description = "Location access is needed to detect BLE devices",
+            rationale = "This app scans for Bluetooth devices and needs location permission to find nearby devices. This is required by Android for BLE scanning."
+        ),
+        PermissionStep(
+            permission = Manifest.permission.ACCESS_COARSE_LOCATION,
+            title = "Coarse Location",
+            description = "Approximate location helps improve device detection",
+            rationale = "Using coarse location improves the accuracy of device detection in your area."
+        ),
+        PermissionStep(
+            permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) 
+                Manifest.permission.BLUETOOTH_SCAN else null,
+            title = "Bluetooth Scan",
+            description = "Required to scan for Bluetooth Low Energy devices",
+            rationale = "Bluetooth scan permission allows the app to discover nearby BLE devices."
+        ),
+        PermissionStep(
+            permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) 
+                Manifest.permission.BLUETOOTH_CONNECT else null,
+            title = "Bluetooth Connect",
+            description = "Needed to communicate with detected devices",
+            rationale = "This permission allows the app to connect to and receive data from Bluetooth devices."
+        ),
+        PermissionStep(
+            permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) 
+                Manifest.permission.POST_NOTIFICATIONS else null,
+            title = "Notifications",
+            description = "Show alerts when devices are detected",
+            rationale = "Get notified when the scanner detects devices, even when the app is in the background."
+        )
+    ).filter { it.permission != null }
+    
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Move to next permission step
+            if (currentPermissionStep < permissionSteps.size - 1) {
+                currentPermissionStep++
+                // Launch next permission
+                permissionSteps.getOrNull(currentPermissionStep)?.permission?.let {
+                    permissionLauncher.launch(it)
+                }
+            } else {
+                // All permissions granted
+                viewModel.onPermissionsGranted()
+            }
+        } else {
+            // Permission denied, show rationale dialog
+            viewModel.onPermissionDenied()
+        }
+    }
+    
+    // Request first permission on first composable entry
+    LaunchedEffect(Unit) {
+        if (currentPermissionStep == 0 && permissionSteps.isNotEmpty()) {
+            permissionSteps[0].permission?.let {
+                permissionLauncher.launch(it)
+            }
+            currentPermissionStep = 0
+        }
+    }
+    
+    // Alert dialog for Bluetooth
+    if (uiState.needsBluetoothEnable) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("Bluetooth Required") },
+            text = { Text("Please enable Bluetooth to scan for devices.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    try {
+                        val intent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        val intent = Intent(Settings.ACTION_SETTINGS)
+                        context.startActivity(intent)
+                    }
+                }) {
+                    Text("Open Settings")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    
+    // Alert dialog for permission rationale
+    if (uiState.needsPermissions && permissionSteps.isNotEmpty()) {
+        val currentStep = permissionSteps.getOrNull(currentPermissionStep) ?: permissionSteps[0]
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text(currentStep.title) },
+            text = { Text(currentStep.description + "\n\n" + currentStep.rationale) },
+            confirmButton = {
+                TextButton(onClick = {
+                    permissionLauncher.launch(currentStep.permission!!)
+                }) {
+                    Text("Grant Permission")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { }) {
+                    Text("Skip")
+                }
+            }
+        )
+    }
+    
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
