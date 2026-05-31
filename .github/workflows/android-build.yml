@@ -2,7 +2,7 @@ name: Android Build (Full & Lite)
 
 on:
   push:
-    branches: [ lite-version, main, fix/build-improvements ]
+    branches: [ lite-version, main, fix/build-improvements, master ]
   workflow_dispatch:
 
 jobs:
@@ -78,3 +78,32 @@ jobs:
         path: |
           jackscanner/app/build/outputs/apk/debug/*.apk
         if-no-files-found: error
+
+  release:
+    needs: [build-full, build-lite]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download Full APK
+      uses: actions/download-artifact@v4
+      with:
+        name: jackscanner-full-debug
+        path: ./apks
+    
+    - name: Download Lite APK
+      uses: actions/download-artifact@v4
+      with:
+        name: jackscanner-lite-debug
+        path: ./apks
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ./apks/*.apk
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
