@@ -189,7 +189,7 @@ private fun PuzzleSelectorCard(uiState: PuzzleUiState, viewModel: BitcoinPuzzleV
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                listOf(1, 2, 3, 4, 5, 10, 50, 100, 500, 1000).forEach { puzzle ->
+                listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 71).forEach { puzzle ->
                     FilterChip(
                         selected = uiState.puzzleNumber == puzzle,
                         onClick = { viewModel.setPuzzle(puzzle) },
