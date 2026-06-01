@@ -614,23 +614,47 @@ private fun BalanceCard(uiState: PuzzleUiState) {
         colors = CardDefaults.cardColors(containerColor = colors.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "BALANCE & TRANSACTIONS",
-                style = MaterialTheme.typography.labelMedium,
-                color = colors.textSecondary
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "BLOCKCHAIN DATA",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.textSecondary
+                )
+                
+                if (uiState.isLoadingBlockchain) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = colors.primary
+                    )
+                } else if (uiState.blockchainError != null) {
+                    Icon(
+                        imageVector = Icons.Default.Error,
+                        contentDescription = "Error",
+                        tint = colors.statusDanger,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(16.dp))
             
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
+                // Real blockchain balance
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "${uiState.balance}",
+                        text = if (uiState.blockchainBalance > 0) {
+                            String.format("%.8f", uiState.blockchainBalance / 100_000_000.0)
+                        } else "0.0",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = colors.statusWarning
+                        color = if (uiState.blockchainBalance > 0) colors.statusSuccess else colors.textTertiary
                     )
                     Text(
                         text = "BTC BALANCE",
@@ -639,9 +663,10 @@ private fun BalanceCard(uiState: PuzzleUiState) {
                     )
                 }
                 
+                // Real blockchain transaction count
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "${uiState.transactionCount}",
+                        text = "${uiState.blockchainTransactions}",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = colors.primary
@@ -652,6 +677,47 @@ private fun BalanceCard(uiState: PuzzleUiState) {
                         color = colors.textTertiary
                     )
                 }
+            }
+            
+            // Show puzzle address
+            uiState.currentPuzzle?.let { puzzle ->
+                Spacer(modifier = Modifier.height(12.dp))
+                Divider(color = colors.border)
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Text(
+                    text = "PUZZLE ADDRESS",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.textTertiary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                Text(
+                    text = puzzle.address,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace,
+                    color = colors.textPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Key Range: 2^${puzzle.startBits} to 2^${puzzle.endBits}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textTertiary
+                )
+            }
+            
+            // Show error if any
+            uiState.blockchainError?.let { error ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.statusDanger
+                )
             }
             
             if (uiState.recentChecks.any { it.balance != null && it.balance > 0 }) {
