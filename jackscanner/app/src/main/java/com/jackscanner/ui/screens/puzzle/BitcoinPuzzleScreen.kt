@@ -654,7 +654,7 @@ private fun BalanceCard(uiState: PuzzleUiState) {
                         } else "0.0",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (uiState.blockchainBalance > 0) colors.statusSuccess else colors.textTertiary
+                        color = if (uiState.blockchainBalance > 0) colors.statusActive else colors.textTertiary
                     )
                     Text(
                         text = "BTC BALANCE",
