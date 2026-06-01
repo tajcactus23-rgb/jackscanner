@@ -31,9 +31,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: jackscanner-apk
-        path: jackscanner/jackscanner/app/build/outputs/apk/
+        path: jackscanner/app/build/outputs/apk/
 
     - name: Verify APK exists
       run: |
-        ls -la jackscanner/jackscanner/app/build/outputs/apk/lite/debug/
-        ls -la jackscanner/jackscanner/app/build/outputs/apk/full/debug/
+        ls -la jackscanner/app/build/outputs/apk/lite/debug/
+        ls -la jackscanner/app/build/outputs/apk/full/debug/
