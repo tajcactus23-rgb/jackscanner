@@ -7,9 +7,11 @@ import android.media.RingtoneManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -186,10 +188,12 @@ private fun PuzzleSelectorCard(uiState: PuzzleUiState, viewModel: BitcoinPuzzleV
             Spacer(modifier = Modifier.height(12.dp))
             
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 71).forEach { puzzle ->
+                (1..71).forEach { puzzle ->
                     FilterChip(
                         selected = uiState.puzzleNumber == puzzle,
                         onClick = { viewModel.setPuzzle(puzzle) },
