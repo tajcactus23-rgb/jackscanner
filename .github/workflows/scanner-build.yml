@@ -27,13 +27,21 @@ jobs:
         chmod +x gradlew
         ./gradlew assembleDebug --no-daemon
 
+    - name: Find APK files
+      run: |
+        find jackscanner -name "*.apk" -type f 2>/dev/null
+        echo "---"
+        ls -la jackscanner/jackscanner/app/build/outputs/apk/debug/ 2>/dev/null || echo "Path not found"
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: jackscanner-apk
-        path: jackscanner/app/build/outputs/apk/debug/*.apk
+        path: |
+          jackscanner/jackscanner/app/build/outputs/apk/debug/*.apk
+          jackscanner/app/build/outputs/apk/debug/*.apk
 
     - name: Verify APK exists
       run: |
-        ls -la jackscanner/app/build/outputs/apk/debug/
-        test -f jackscanner/app/build/outputs/apk/debug/*.apk && echo "APK built successfully!" || echo "APK NOT FOUND"
+        ls -la jackscanner/jackscanner/app/build/outputs/apk/debug/ 2>/dev/null || ls -la jackscanner/app/build/outputs/apk/debug/ 2>/dev/null || echo "Checking other locations..."
+        find jackscanner -name "*.apk" -type f 2>/dev/null | head -5
