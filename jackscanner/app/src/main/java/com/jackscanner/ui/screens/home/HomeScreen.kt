@@ -108,7 +108,7 @@ fun HomeScreen(
             permissionSteps[0].permission?.let { perm ->
                 // We need to request permission - use the viewModel callback
                 viewModel.setCallbacks(
-                    onBluetoothCheck = { },
+                    onBluetoothCheck = { viewModel.toggleScanning() },
                     onPermissionsCheck = { viewModel.toggleScanning() }
                 )
             }

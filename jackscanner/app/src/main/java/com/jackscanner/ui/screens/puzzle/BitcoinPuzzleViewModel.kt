@@ -20,6 +20,9 @@ data class PuzzleUiState(
     val endKey: String = "115792089237316195423570985008687907852837564279074904382605163141518161494337",
     val currentKey: BigInteger = BigInteger.ZERO,
     
+    // Wallet Address
+    val walletAddress: String = "",
+    
     // Method Selection
     val selectedMethod: SearchMethod = SearchMethod.SEQUENTIAL,
     val fibonacciStep: BigInteger = BigInteger("1134903170"),
@@ -57,7 +60,8 @@ data class CheckResult(
     val timestamp: Long,
     val method: SearchMethod,
     val result: CheckOutcome,
-    val balance: Double? = null
+    val balance: Double? = null,
+    val transactionCount: Int? = null
 )
 
 enum class CheckOutcome {
@@ -83,7 +87,9 @@ class BitcoinPuzzleViewModel @Inject constructor() : ViewModel() {
         5 to Pair("10000", "100000"),
         10 to Pair("100000", "1000000"),
         50 to Pair("1000000000", "10000000000"),
-        100 to Pair("100000000000", "1000000000000")
+        100 to Pair("100000000000", "1000000000000"),
+        500 to Pair("100000000000000", "1000000000000000"),
+        1000 to Pair("100000000000000000", "1000000000000000000")
     )
     
     init {
@@ -139,6 +145,10 @@ class BitcoinPuzzleViewModel @Inject constructor() : ViewModel() {
         _uiState.update { it.copy(endKey = key) }
     }
     
+    fun setWalletAddress(address: String) {
+        _uiState.update { it.copy(walletAddress = address) }
+    }
+    
     fun startSearch() {
         if (_uiState.value.isSearching) return
         
@@ -180,7 +190,8 @@ class BitcoinPuzzleViewModel @Inject constructor() : ViewModel() {
                     timestamp = System.currentTimeMillis(),
                     method = state.selectedMethod,
                     result = result.outcome,
-                    balance = result.balance
+                    balance = result.balance,
+                    transactionCount = result.transactions
                 )
                 
                 _uiState.update { currentState ->
@@ -192,7 +203,8 @@ class BitcoinPuzzleViewModel @Inject constructor() : ViewModel() {
                         recentChecks = filtered,
                         keysChecked = count + 1,
                         currentKey = currentKey,
-                        balance = result.balance ?: currentState.balance
+                        balance = result.balance ?: currentState.balance,
+                        transactionCount = result.transactions ?: currentState.transactionCount
                     )
                 }
                 
