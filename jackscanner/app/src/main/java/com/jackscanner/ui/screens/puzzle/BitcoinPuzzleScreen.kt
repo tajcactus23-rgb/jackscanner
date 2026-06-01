@@ -359,7 +359,7 @@ private fun ProgressStatsCard(uiState: PuzzleUiState) {
             
             // Progress Bar
             LinearProgressIndicator(
-                progress = { uiState.progress },
+                progress = uiState.progress,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)
