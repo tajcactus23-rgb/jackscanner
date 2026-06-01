@@ -1,5 +1,10 @@
 package com.jackscanner.ui.screens.onboarding
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,10 +18,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jackscanner.ui.components.GlassCard
 import com.jackscanner.ui.theme.BlueMeanieTheme
@@ -28,6 +35,36 @@ fun OnboardingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val colors = BlueMeanieTheme.colors
+    val context = LocalContext.current
+    
+    // Individual permission launchers for each permission type
+    val bluetoothPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        viewModel.onPermissionResult("bluetooth", isGranted)
+        viewModel.nextStep()
+    }
+    
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        viewModel.onPermissionResult("notifications", isGranted)
+        viewModel.nextStep()
+    }
+    
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        viewModel.onPermissionResult("location", isGranted)
+        viewModel.nextStep()
+    }
+    
+    val backgroundLocationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        viewModel.onPermissionResult("background_location", isGranted)
+        viewModel.nextStep()
+    }
     
     Column(
         modifier = Modifier
@@ -77,7 +114,7 @@ fun OnboardingScreen(
                     whyRequired = "BlueMeanie needs Bluetooth access to detect Axon devices through BLE advertisements.",
                     howUsed = "Your device scans for BLE signals and matches them against known Axon device signatures.",
                     privacyImpact = "BlueMeanie only receives advertising data from nearby BLE devices. No personal data is transmitted.",
-                    onGrant = { viewModel.grantBluetooth(); viewModel.nextStep() }
+                    onGrant = { bluetoothPermissionLauncher.launch(Manifest.permission.BLUETOOTH_SCAN) }
                 )
                 2 -> PermissionStep(
                     title = "Notifications",
@@ -86,7 +123,14 @@ fun OnboardingScreen(
                     whyRequired = "Notifications alert you when an Axon device is detected.",
                     howUsed = "When a device is detected, you'll receive a notification with details.",
                     privacyImpact = "Notifications are generated locally on your device. No data is sent to external servers.",
-                    onGrant = { viewModel.grantNotifications(); viewModel.nextStep() }
+                    onGrant = { 
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            viewModel.onPermissionResult("notifications", true)
+                            viewModel.nextStep()
+                        }
+                    }
                 )
                 3 -> PermissionStep(
                     title = "Location",
@@ -95,7 +139,7 @@ fun OnboardingScreen(
                     whyRequired = "Android 12 and earlier require location permission for BLE scanning.",
                     howUsed = "Location permission allows the scanner to detect BLE devices in your area.",
                     privacyImpact = "Your location is never shared with other users or servers.",
-                    onGrant = { viewModel.grantLocation(); viewModel.nextStep() }
+                    onGrant = { locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }
                 )
                 4 -> PermissionStep(
                     title = "Background Location",
@@ -104,7 +148,7 @@ fun OnboardingScreen(
                     whyRequired = "Background location enables continuous scanning even when the app is closed.",
                     howUsed = "BlueMeanie can monitor for Axon devices while running in the background.",
                     privacyImpact = "Location data stays on your device and is only used for detection purposes.",
-                    onGrant = { viewModel.grantBackgroundLocation(); viewModel.nextStep() }
+                    onGrant = { backgroundLocationPermissionLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION) }
                 )
                 5 -> UsernameStep(
                     username = uiState.username,

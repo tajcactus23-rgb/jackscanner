@@ -108,20 +108,14 @@ class MainActivity : ComponentActivity() {
             val enableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
             enableBluetoothLauncher.launch(enableIntent)
         } else {
-            checkPermissionsAndScan()
-        }
-    }
-
-    private fun checkPermissionsAndScan() {
-        val missingPermissions = requiredPermissions.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }
-
-        if (missingPermissions.isNotEmpty()) {
-            permissionLauncher.launch(missingPermissions.toTypedArray())
-        } else {
+            // Permissions are handled in onboarding flow - just start scanning
             startScanning()
         }
+    }
+    
+    private fun checkPermissionsAndScan() {
+        // Permissions are now handled in onboarding flow - just start scanning
+        startScanning()
     }
 
     private fun isBluetoothEnabled(): Boolean {
