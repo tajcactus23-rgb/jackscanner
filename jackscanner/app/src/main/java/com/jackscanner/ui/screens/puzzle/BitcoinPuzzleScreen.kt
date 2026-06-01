@@ -23,7 +23,8 @@ import com.jackscanner.ui.theme.BlueMeanieTheme
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun BitcoinPuzzleScreen(
     viewModel: BitcoinPuzzleViewModel = hiltViewModel()
