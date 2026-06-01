@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.jackscanner.ui.screens.puzzle
 
 import androidx.compose.foundation.background
@@ -22,8 +24,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.jackscanner.ui.theme.BlueMeanieTheme
 import java.text.SimpleDateFormat
 import java.util.*
-
-@file:OptIn(ExperimentalMaterial3Api::class)
 
 @Composable
 fun BitcoinPuzzleScreen(
