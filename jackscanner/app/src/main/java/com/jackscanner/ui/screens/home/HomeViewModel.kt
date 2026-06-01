@@ -101,19 +101,28 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(scanError = null) }
 
         if (BleScanService.isRunning) {
-            val result = scanController.stopScanning()
-            if (!result) {
-                _uiState.update { it.copy(scanError = "Failed to stop scanning") }
+            try {
+                val result = scanController.stopScanning()
+                if (!result) {
+                    _uiState.update { it.copy(scanError = "Failed to stop scanning") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(scanError = "Error stopping scan: ${e.message}") }
             }
             return
         }
 
-        // Check Bluetooth is enabled
-        val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        val bluetoothAdapter = bluetoothManager.adapter
+        // Check Bluetooth availability safely
+        val bluetoothManager = try {
+            context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+        } catch (e: Exception) {
+            null
+        }
+        
+        val bluetoothAdapter = bluetoothManager?.adapter
 
         if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
-            _uiState.update { it.copy(needsBluetoothEnable = true) }
+            _uiState.update { it.copy(needsBluetoothEnable = true, scanError = "Bluetooth is not available or disabled") }
             bluetoothCheckCallback?.invoke()
             return
         }
@@ -132,19 +141,27 @@ class HomeViewModel @Inject constructor(
         }
 
         val missingPermissions = requiredPermissions.filter {
-            context.checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
+            try {
+                context.checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
+            } catch (e: Exception) {
+                true
+            }
         }
 
         if (missingPermissions.isNotEmpty()) {
-            _uiState.update { it.copy(needsPermissions = true) }
+            _uiState.update { it.copy(needsPermissions = true, scanError = "Required permissions not granted") }
             permissionsCheckCallback?.invoke()
             return
         }
 
         // All checks passed - start scanning
-        val result = scanController.startScanning()
-        if (!result) {
-            _uiState.update { it.copy(scanError = "Failed to start scanning") }
+        try {
+            val result = scanController.startScanning()
+            if (!result) {
+                _uiState.update { it.copy(scanError = "Failed to start scanning service") }
+            }
+        } catch (e: Exception) {
+            _uiState.update { it.copy(scanError = "Error starting scanner: ${e.message}") }
         }
     }
     

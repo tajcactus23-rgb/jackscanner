@@ -13,6 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -25,6 +26,7 @@ import com.jackscanner.R
 import com.jackscanner.data.preferences.PreferencesManager
 import com.jackscanner.ui.navigation.BlueMeanieNavGraph
 import com.jackscanner.ui.navigation.Screen
+import com.jackscanner.ui.navigation.bottomNavItems
 import com.jackscanner.service.BleScanService
 import com.jackscanner.ui.theme.BlueMeanieTheme
 import com.jackscanner.domain.model.AppTheme
@@ -148,6 +150,8 @@ private fun MainContent(
     preferencesManager: PreferencesManager
 ) {
     val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
     var showOnboarding by remember { mutableStateOf(false) }
 
@@ -166,10 +170,36 @@ private fun MainContent(
 
     val startDestination = if (showOnboarding) Screen.Onboarding.route else Screen.Home.route
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        BlueMeanieNavGraph(
-            navController = navController,
-            startDestination = startDestination
-        )
+    Scaffold(
+        bottomBar = {
+            // Only show bottom nav for main screens
+            if (currentRoute in listOf(Screen.Home.route, Screen.Puzzle.route, Screen.Settings.route)) {
+                NavigationBar {
+                    bottomNavItems.forEach { screen ->
+                        NavigationBarItem(
+                            icon = { Icon(screen.icon, contentDescription = screen.title) },
+                            label = { Text(screen.title) },
+                            selected = currentRoute == screen.route,
+                            onClick = {
+                                if (currentRoute != screen.route) {
+                                    navController.navigate(screen.route) {
+                                        popUpTo(Screen.Home.route) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    ) { paddingValues ->
+        Surface(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            BlueMeanieNavGraph(
+                navController = navController,
+                startDestination = startDestination
+            )
+        }
     }
 }

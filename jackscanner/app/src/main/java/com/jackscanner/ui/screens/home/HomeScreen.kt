@@ -47,6 +47,18 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val colors = BlueMeanieTheme.colors
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show error snackbar when scanError is set
+    LaunchedEffect(uiState.scanError) {
+        uiState.scanError?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = error,
+                duration = SnackbarDuration.Short
+            )
+            viewModel.clearScanError()
+        }
+    }
 
     val context = LocalContext.current
     
@@ -170,14 +182,18 @@ fun HomeScreen(
         )
     }
     
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.background)
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(vertical = 24.dp)
-    ) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.background)
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(vertical = 24.dp)
+        ) {
         item {
             HomeHeader(
                 isScanning = uiState.isScanning,
@@ -210,6 +226,7 @@ fun HomeScreen(
                 DetectionItem(detection = detection, onClick = { onDetectionClick(detection.id) })
             }
         }
+    }
     }
 }
 

@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.jackscanner.ui.screens.home.HomeScreen
 import com.jackscanner.ui.screens.onboarding.OnboardingScreen
+import com.jackscanner.ui.screens.puzzle.BitcoinPuzzleScreen
 import com.jackscanner.ui.screens.settings.SettingsScreen
 import com.jackscanner.ui.screens.settings.DetectionDetailScreen
 
@@ -38,12 +39,15 @@ fun BlueMeanieNavGraph(
             )
         }
         composable(Screen.Settings.route) {
-            SettingsScreen(onDevAccess = { navController.navigate("dev_settings") })
+            SettingsScreen(onDevAccess = { navController.navigate(Screen.DevSettings.route) })
+        }
+        composable(Screen.Puzzle.route) {
+            BitcoinPuzzleScreen()
         }
         composable(route = "detection/{detectionId}", arguments = listOf(navArgument("detectionId") { type = NavType.StringType })) { backStackEntry ->
             DetectionDetailScreen(detectionId = backStackEntry.arguments?.getString("detectionId") ?: "", onBack = { navController.popBackStack() })
         }
-        composable("dev_settings") {
+        composable(Screen.DevSettings.route) {
             com.jackscanner.ui.screens.dev.DevSettingsScreen(onBack = { navController.popBackStack() })
         }
     }
