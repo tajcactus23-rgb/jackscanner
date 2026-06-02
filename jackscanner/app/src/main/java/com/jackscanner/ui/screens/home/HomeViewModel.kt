@@ -105,6 +105,8 @@ class HomeViewModel @Inject constructor(
         } catch (e: Exception) {
             // Log error - service might not be available
             e.printStackTrace()
+        }
+        
         if (BleScanService.isRunning) {
             scanController.stopScanning()
             return
