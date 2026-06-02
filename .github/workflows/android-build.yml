@@ -17,7 +17,7 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
     - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
+      uses: android-actions/setup-android@v3
     - name: Build Full Debug APK
       run: cd jackscanner && ./gradlew assembleFullDebug --no-daemon
     - name: Upload Full APK
@@ -37,7 +37,7 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
     - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
+      uses: android-actions/setup-android@v3
     - name: Build Lite Debug APK
       run: cd jackscanner && ./gradlew assembleLiteDebug --no-daemon
     - name: Upload Lite APK
@@ -46,7 +46,7 @@ jobs:
         name: jackscanner-lite-debug
         path: jackscanner/app/build/outputs/apk/lite/debug/app-lite-debug.apk
 
-  build-emulator-test:
+  build-debug:
     runs-on: ubuntu-latest
 
     steps:
@@ -68,15 +68,17 @@ jobs:
     - name: Clean project
       run: cd jackscanner && ./gradlew clean
 
-    - name: Build Debug APK
-      run: cd jackscanner && ./gradlew assembleDebug --stacktrace
+    - name: Build Full Debug APK
+      run: cd jackscanner && ./gradlew assembleFullDebug --stacktrace
 
-    - name: Upload APK
+    - name: Build Lite Debug APK
+      run: cd jackscanner && ./gradlew assembleLiteDebug --stacktrace
+
+    - name: Upload All Debug APKs
       uses: actions/upload-artifact@v4
       with:
-        name: debug-apk
-        path: |
-          jackscanner/app/build/outputs/apk/debug/*.apk
+        name: debug-apks
+        path: jackscanner/app/build/outputs/apk/*/debug/*.apk
         if-no-files-found: error
 
   release:
@@ -105,5 +107,7 @@ jobs:
         files: ./apks/*.apk
         draft: false
         prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
