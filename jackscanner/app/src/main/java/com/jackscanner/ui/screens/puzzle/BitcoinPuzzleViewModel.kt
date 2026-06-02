@@ -2,7 +2,11 @@ package com.jackscanner.ui.screens.puzzle
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jackscanner.data.api.BitcoinApiService
+import com.jackscanner.data.model.BitcoinPuzzle
+import com.jackscanner.data.model.BitcoinPuzzleDatabase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,15 +14,32 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.math.BigInteger
 import javax.inject.Inject
 import kotlin.random.Random
 
+/**
+ * UI State for Bitcoin Puzzle screen
+ */
 data class PuzzleUiState(
-    // Search Range
-    val startKey: String = "1",
-    val endKey: String = "115792089237316195423570985008687907852837564279074904382605163141518161494337",
+    // Current puzzle from database
+    val currentPuzzle: BitcoinPuzzle? = null,
+    val puzzleNumber: Int = 1,
+    
+    // Real blockchain data
+    val blockchainBalance: Long = 0,           // Balance in satoshis
+    val blockchainTransactions: Int = 0,        // Transaction count from blockchain
+    val isLoadingBlockchain: Boolean = false,  // Loading indicator
+    val blockchainError: String? = null,        // Error message if API fails
+    
+    // Search Range (from puzzle)
+    val startKey: String = "1048576",
+    val endKey: String = "2097152",
     val currentKey: BigInteger = BigInteger.ZERO,
+    
+    // User wallet address
+    val walletAddress: String = "",
     
     // Method Selection
     val selectedMethod: SearchMethod = SearchMethod.SEQUENTIAL,
@@ -34,7 +55,6 @@ data class PuzzleUiState(
     val foundKey: String? = null,
     val balance: Double = 0.0,
     val transactionCount: Int = 0,
-    val puzzleNumber: Int = 0,
     
     // Visualization
     val recentChecks: List<CheckResult> = emptyList(),
@@ -57,7 +77,8 @@ data class CheckResult(
     val timestamp: Long,
     val method: SearchMethod,
     val result: CheckOutcome,
-    val balance: Double? = null
+    val balance: Double? = null,
+    val transactionCount: Int? = null
 )
 
 enum class CheckOutcome {
@@ -68,50 +89,81 @@ enum class CheckOutcome {
 }
 
 @HiltViewModel
-class BitcoinPuzzleViewModel @Inject constructor() : ViewModel() {
+class BitcoinPuzzleViewModel @Inject constructor(
+    private val bitcoinApiService: BitcoinApiService
+) : ViewModel() {
     
     private val _uiState = MutableStateFlow(PuzzleUiState())
     val uiState: StateFlow<PuzzleUiState> = _uiState.asStateFlow()
     
     private var searchJob: Job? = null
     
-    private val knownPuzzles = mapOf(
-        1 to Pair("1", "10"),
-        2 to Pair("10", "100"),
-        3 to Pair("100", "1000"),
-        4 to Pair("1000", "10000"),
-        5 to Pair("10000", "100000"),
-        10 to Pair("100000", "1000000"),
-        50 to Pair("1000000000", "10000000000"),
-        100 to Pair("100000000000", "1000000000000")
-    )
-    
     init {
-        val puzzle = knownPuzzles[1]!!
+        loadPuzzle(1)
+    }
+    
+    /**
+     * Load puzzle from database and fetch real blockchain data
+     */
+    fun loadPuzzle(puzzleNum: Int) {
+        val puzzle = BitcoinPuzzleDatabase.getPuzzle(puzzleNum) ?: BitcoinPuzzleDatabase.puzzles.first()
+        
         _uiState.update {
             it.copy(
-                startKey = puzzle.first,
-                endKey = puzzle.second,
-                currentKey = BigInteger(puzzle.first),
-                puzzleNumber = 1
+                currentPuzzle = puzzle,
+                puzzleNumber = puzzle.number,
+                startKey = puzzle.keyStartDecimal,
+                endKey = puzzle.keyEndDecimal,
+                currentKey = BigInteger(puzzle.keyStartDecimal),
+                foundKey = null,
+                keysChecked = 0,
+                totalChecked = 0,
+                recentChecks = emptyList(),
+                isLoadingBlockchain = true,
+                blockchainError = null
             )
+        }
+        
+        // Fetch real blockchain data for this address
+        fetchBlockchainData(puzzle.address)
+    }
+    
+    /**
+     * Fetch real balance and transaction count from Bitcoin blockchain
+     */
+    private fun fetchBlockchainData(address: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingBlockchain = true, blockchainError = null) }
+            
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    bitcoinApiService.getAddressInfo(address)
+                }
+                
+                // Calculate balance in satoshis (funded - spent)
+                val balanceSatoshis = response.chain_stats.funded_txo_sum - response.chain_stats.spent_txo_sum
+                
+                _uiState.update {
+                    it.copy(
+                        blockchainBalance = balanceSatoshis,
+                        blockchainTransactions = response.chain_stats.tx_count,
+                        isLoadingBlockchain = false
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLoadingBlockchain = false,
+                        blockchainError = "Failed to fetch blockchain data: ${e.message}"
+                    )
+                }
+            }
         }
     }
     
     fun setPuzzle(puzzleNum: Int) {
-        val puzzle = knownPuzzles[puzzleNum] ?: knownPuzzles[1]!!
-        _uiState.update {
-            it.copy(
-                startKey = puzzle.first,
-                endKey = puzzle.second,
-                currentKey = BigInteger(puzzle.first),
-                puzzleNumber = puzzleNum,
-                foundKey = null,
-                keysChecked = 0,
-                totalChecked = 0,
-                recentChecks = emptyList()
-            )
-        }
+        searchJob?.cancel()
+        loadPuzzle(puzzleNum)
     }
     
     fun setSearchMethod(method: SearchMethod) {
@@ -139,6 +191,15 @@ class BitcoinPuzzleViewModel @Inject constructor() : ViewModel() {
         _uiState.update { it.copy(endKey = key) }
     }
     
+    fun setWalletAddress(address: String) {
+        _uiState.update { it.copy(walletAddress = address) }
+    }
+    
+    /**
+     * Start the key search simulation
+     * NOTE: Real BTC puzzle solving requires GPU farms, not mobile devices
+     * This shows what the UI would look like while searching
+     */
     fun startSearch() {
         if (_uiState.value.isSearching) return
         
@@ -158,19 +219,19 @@ class BitcoinPuzzleViewModel @Inject constructor() : ViewModel() {
                     SearchMethod.SEQUENTIAL -> start
                     SearchMethod.RANDOM -> {
                         val range = end - start
-                        if (range > BigInteger.ZERO) {
-                            start + BigInteger(Random.nextLong(range.toLong().coerceAtMost(Long.MAX_VALUE)))
+                        if (range > BigInteger.ZERO && range < BigInteger.valueOf(Long.MAX_VALUE)) {
+                            start + BigInteger.valueOf(Random.nextLong(range.toLong()))
                         } else start
                     }
                     SearchMethod.FIBONACCI -> {
                         val range = end - start
                         if (range > BigInteger.ZERO) {
-                            val step = state.fibonacciStep % (range + BigInteger.ONE)
-                            start + step.multiply(BigInteger(count.toString().coerceAtMost(Long.MAX_VALUE.toString())))
+                            val step = state.fibonacciStep % (range + BigInteger.valueOf(1))
+                            start + step.multiply(BigInteger.valueOf(count))
                         } else start
                     }
                     SearchMethod.BINARY_SEARCH -> {
-                        if (count % 2 == 0L) (start + end) / 2 else start
+                        if (count % 2 == 0L) (start + end) / BigInteger.valueOf(2) else start
                     }
                 }
                 
@@ -180,7 +241,8 @@ class BitcoinPuzzleViewModel @Inject constructor() : ViewModel() {
                     timestamp = System.currentTimeMillis(),
                     method = state.selectedMethod,
                     result = result.outcome,
-                    balance = result.balance
+                    balance = result.balance,
+                    transactionCount = result.transactions
                 )
                 
                 _uiState.update { currentState ->
@@ -192,7 +254,8 @@ class BitcoinPuzzleViewModel @Inject constructor() : ViewModel() {
                         recentChecks = filtered,
                         keysChecked = count + 1,
                         currentKey = currentKey,
-                        balance = result.balance ?: currentState.balance
+                        balance = result.balance ?: currentState.balance,
+                        transactionCount = result.transactions ?: currentState.transactionCount
                     )
                 }
                 
@@ -253,6 +316,10 @@ class BitcoinPuzzleViewModel @Inject constructor() : ViewModel() {
         }
     }
     
+    /**
+     * Simulation for UI demonstration
+     * Real puzzle solving requires GPU clusters, not mobile
+     */
     private fun simulateCheck(key: String): CheckSimulationResult {
         val hash = key.hashCode()
         return when {
@@ -280,4 +347,9 @@ class BitcoinPuzzleViewModel @Inject constructor() : ViewModel() {
         val str = key.toString()
         return if (str.length > 8) str.take(4) + "..." + str.takeLast(4) else str
     }
+    
+    /**
+     * Get formatted balance in BTC
+     */
+    fun getBalanceBtc(): Double = _uiState.value.blockchainBalance / 100_000_000.0
 }

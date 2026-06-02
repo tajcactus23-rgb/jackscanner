@@ -29,7 +29,8 @@ data class HomeUiState(
     val bluetoothActive: Boolean = false,
     val communityActivity: Int = 0,
     val needsBluetoothEnable: Boolean = false,
-    val needsPermissions: Boolean = false
+    val needsPermissions: Boolean = false,
+    val scanError: String? = null
 )
 
 @HiltViewModel
@@ -96,30 +97,36 @@ class HomeViewModel @Inject constructor(
     }
     
     fun toggleScanning() {
-        try {
-            if (BleScanService.isRunning) {
-                scanController.stopScanning()
-            } else {
-                scanController.startScanning()
-            }
-        } catch (e: Exception) {
-            // Log error - service might not be available
-            e.printStackTrace()
+        // Clear any previous errors
+        _uiState.update { it.copy(scanError = null) }
+
         if (BleScanService.isRunning) {
-            scanController.stopScanning()
+            try {
+                val result = scanController.stopScanning()
+                if (!result) {
+                    _uiState.update { it.copy(scanError = "Failed to stop scanning") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(scanError = "Error stopping scan: ${e.message}") }
+            }
             return
         }
+
+        // Check Bluetooth availability safely
+        val bluetoothManager = try {
+            context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+        } catch (e: Exception) {
+            null
+        }
         
-        // Check Bluetooth is enabled
-        val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        val bluetoothAdapter = bluetoothManager.adapter
-        
+        val bluetoothAdapter = bluetoothManager?.adapter
+
         if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
-            _uiState.update { it.copy(needsBluetoothEnable = true) }
+            _uiState.update { it.copy(needsBluetoothEnable = true, scanError = "Bluetooth is not available or disabled") }
             bluetoothCheckCallback?.invoke()
             return
         }
-        
+
         // Check all required permissions
         val requiredPermissions = buildList {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -132,23 +139,34 @@ class HomeViewModel @Inject constructor(
             add(Manifest.permission.ACCESS_FINE_LOCATION)
             add(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
-        
+
         val missingPermissions = requiredPermissions.filter {
-            context.checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
+            try {
+                context.checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
+            } catch (e: Exception) {
+                true
+            }
         }
-        
+
         if (missingPermissions.isNotEmpty()) {
-            _uiState.update { it.copy(needsPermissions = true) }
+            _uiState.update { it.copy(needsPermissions = true, scanError = "Required permissions not granted") }
             permissionsCheckCallback?.invoke()
             return
         }
-        
+
         // All checks passed - start scanning
-        scanController.startScanning(checkBluetooth = false)
+        try {
+            val result = scanController.startScanning()
+            if (!result) {
+                _uiState.update { it.copy(scanError = "Failed to start scanning service") }
+            }
+        } catch (e: Exception) {
+            _uiState.update { it.copy(scanError = "Error starting scanner: ${e.message}") }
+        }
     }
     
     fun onBluetoothEnabled() {
-        _uiState.update { it.copy(needsBluetoothEnable = false) }
+        _uiState.update { it.copy(needsBluetoothEnable = false, scanError = null) }
         toggleScanning()
     }
     
@@ -162,6 +180,10 @@ class HomeViewModel @Inject constructor(
     
     fun refreshData() {
         loadData()
+    }
+
+    fun clearScanError() {
+        _uiState.update { it.copy(scanError = null) }
     }
 }
 

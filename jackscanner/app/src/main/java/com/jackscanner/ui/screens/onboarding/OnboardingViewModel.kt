@@ -97,6 +97,19 @@ class OnboardingViewModel @Inject constructor(
         }
     }
     
+    fun onPermissionResult(permission: String, granted: Boolean) {
+        _uiState.update { state ->
+            val newPermissions = when (permission) {
+                "bluetooth" -> state.permissionsGranted.copy(bluetooth = granted)
+                "notifications" -> state.permissionsGranted.copy(notifications = granted)
+                "location" -> state.permissionsGranted.copy(location = granted)
+                "background_location" -> state.permissionsGranted.copy(backgroundLocation = granted)
+                else -> state.permissionsGranted
+            }
+            state.copy(permissionsGranted = newPermissions)
+        }
+    }
+    
     fun completeOnboarding() {
         viewModelScope.launch {
             preferencesManager.setUserProfile(

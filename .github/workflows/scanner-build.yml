@@ -21,15 +21,6 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
-      with:
-        api-level: 34
-        build-tools: 34.0.0
-
-    - name: Accept licenses
-      run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-
     - name: Build Debug APK
       run: |
         cd jackscanner
@@ -40,9 +31,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: jackscanner-apk
-        path: jackscanner/app/build/outputs/apk/debug/*.apk
+        path: jackscanner/app/build/outputs/apk/
 
     - name: Verify APK exists
       run: |
-        ls -la jackscanner/app/build/outputs/apk/debug/
-        test -f jackscanner/app/build/outputs/apk/debug/*.apk && echo "APK built successfully!" || echo "APK NOT FOUND"
+        ls -la jackscanner/app/build/outputs/apk/lite/debug/
+        ls -la jackscanner/app/build/outputs/apk/full/debug/

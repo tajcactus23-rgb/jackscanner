@@ -47,6 +47,18 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val colors = BlueMeanieTheme.colors
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show error snackbar when scanError is set
+    LaunchedEffect(uiState.scanError) {
+        uiState.scanError?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = error,
+                duration = SnackbarDuration.Short
+            )
+            viewModel.clearScanError()
+        }
+    }
 
     val context = LocalContext.current
     
@@ -90,34 +102,16 @@ fun HomeScreen(
         )
     ).filter { it.permission != null }
     
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            // Move to next permission step
-            if (currentPermissionStep < permissionSteps.size - 1) {
-                currentPermissionStep++
-                // Launch next permission
-                permissionSteps.getOrNull(currentPermissionStep)?.permission?.let {
-                    permissionLauncher.launch(it)
-                }
-            } else {
-                // All permissions granted
-                viewModel.onPermissionsGranted()
-            }
-        } else {
-            // Permission denied, show rationale dialog
-            viewModel.onPermissionDenied()
-        }
-    }
-    
     // Request first permission on first composable entry
     LaunchedEffect(Unit) {
         if (currentPermissionStep == 0 && permissionSteps.isNotEmpty()) {
-            permissionSteps[0].permission?.let {
-                permissionLauncher.launch(it)
+            permissionSteps[0].permission?.let { perm ->
+                // We need to request permission - use the viewModel callback
+                viewModel.setCallbacks(
+                    onBluetoothCheck = { viewModel.toggleScanning() },
+                    onPermissionsCheck = { viewModel.toggleScanning() }
+                )
             }
-            currentPermissionStep = 0
         }
     }
     
@@ -157,7 +151,7 @@ fun HomeScreen(
             text = { Text(currentStep.description + "\n\n" + currentStep.rationale) },
             confirmButton = {
                 TextButton(onClick = {
-                    permissionLauncher.launch(currentStep.permission!!)
+                    viewModel.onPermissionsGranted()
                 }) {
                     Text("Grant Permission")
                 }
@@ -170,14 +164,18 @@ fun HomeScreen(
         )
     }
     
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.background)
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(vertical = 24.dp)
-    ) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.background)
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(vertical = 24.dp)
+        ) {
         item {
             HomeHeader(
                 isScanning = uiState.isScanning,
@@ -210,6 +208,7 @@ fun HomeScreen(
                 DetectionItem(detection = detection, onClick = { onDetectionClick(detection.id) })
             }
         }
+    }
     }
 }
 
