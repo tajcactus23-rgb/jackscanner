@@ -16,15 +16,19 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+        cache: gradle
     - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
+      uses: android-actions/setup-android@v3
+    - name: Grant execute permission for gradlew
+      run: chmod +x jackscanner/gradlew
     - name: Build Full Debug APK
-      run: cd jackscanner && ./gradlew assembleFullDebug --no-daemon
+      run: cd jackscanner && ./gradlew assembleFullDebug --no-daemon --stacktrace
     - name: Upload Full APK
       uses: actions/upload-artifact@v4
       with:
         name: jackscanner-full-debug
         path: jackscanner/app/build/outputs/apk/full/debug/app-full-debug.apk
+        if-no-files-found: error
 
   build-lite:
     runs-on: ubuntu-latest
@@ -36,15 +40,19 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+        cache: gradle
     - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
+      uses: android-actions/setup-android@v3
+    - name: Grant execute permission for gradlew
+      run: chmod +x jackscanner/gradlew
     - name: Build Lite Debug APK
-      run: cd jackscanner && ./gradlew assembleLiteDebug --no-daemon
+      run: cd jackscanner && ./gradlew assembleLiteDebug --no-daemon --stacktrace
     - name: Upload Lite APK
       uses: actions/upload-artifact@v4
       with:
         name: jackscanner-lite-debug
         path: jackscanner/app/build/outputs/apk/lite/debug/app-lite-debug.apk
+        if-no-files-found: error
 
   build-emulator-test:
     runs-on: ubuntu-latest
