@@ -111,13 +111,14 @@ fun HomeScreen(
         }
     }
     
-    // Request first permission on first composable entry
-    LaunchedEffect(Unit) {
-        if (currentPermissionStep == 0 && permissionSteps.isNotEmpty()) {
+    // Request first permission on first composable entry (only once)
+    var hasRequestedPermissions by remember { mutableStateOf(false) }
+    LaunchedEffect(hasRequestedPermissions) {
+        if (!hasRequestedPermissions && permissionSteps.isNotEmpty()) {
+            hasRequestedPermissions = true
             permissionSteps[0].permission?.let {
                 permissionLauncher.launch(it)
             }
-            currentPermissionStep = 0
         }
     }
     
