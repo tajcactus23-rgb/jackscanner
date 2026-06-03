@@ -1,5 +1,3 @@
-name: Android Build (Full & Lite)
-
 on:
   push:
     branches: [ lite-version, main, fix/build-improvements, master ]
@@ -75,8 +73,8 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: debug-apk
-        path: |
-    jackscanner/app/build/outputs/apk/full/debug/app-full-debug.apk        if-no-files-found: error
+        path: jackscanner/app/build/outputs/apk/full/debug/app-full-debug.apk
+        if-no-files-found: error
 
   release:
     needs: [build-full, build-lite]
