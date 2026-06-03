@@ -69,15 +69,14 @@ jobs:
       run: cd jackscanner && ./gradlew clean
 
     - name: Build Debug APK
-      run: cd jackscanner && ./gradlew assembleDebug --stacktrace
+      run: cd jackscanner && ./gradlew assembleFullDebug --stacktrace
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: debug-apk
         path: |
-          jackscanner/app/build/outputs/apk/debug/*.apk
-        if-no-files-found: error
+    jackscanner/app/build/outputs/apk/full/debug/app-full-debug.apk        if-no-files-found: error
 
   release:
     needs: [build-full, build-lite]
