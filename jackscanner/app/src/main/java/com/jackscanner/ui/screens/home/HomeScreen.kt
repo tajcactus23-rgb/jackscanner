@@ -6,9 +6,8 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,14 +16,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -33,8 +34,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.jackscanner.domain.model.Detection
 import com.jackscanner.domain.model.ScannerStatus
 import com.jackscanner.ui.components.GlassCard
-import com.jackscanner.ui.components.RadarAnimation
-import com.jackscanner.ui.components.StatusBadge
 import com.jackscanner.ui.theme.BlueMeanieTheme
 import java.text.SimpleDateFormat
 import java.util.*
@@ -47,245 +46,758 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val colors = BlueMeanieTheme.colors
-
-    val context = LocalContext.current
     
-    // Permission step tracking
-    var currentPermissionStep by remember { mutableIntStateOf(0) }
+    var activeTab by remember { mutableStateOf("radar") }
+    val tabs = listOf("radar", "feed", "heatmap", "intel", "gear")
+    val tabIcons = mapOf(
+        "radar" to Icons.Default.Radar,
+        "feed" to Icons.Default.List,
+        "heatmap" to Icons.Default.Map,
+        "intel" to Icons.Default.Insights,
+        "gear" to Icons.Default.Settings
+    )
     
-    // Define permission steps (requests one at a time)
-    val permissionSteps = listOf(
-        PermissionStep(
-            permission = Manifest.permission.ACCESS_FINE_LOCATION,
-            title = "Location Required",
-            description = "Location access is needed to detect BLE devices",
-            rationale = "This app scans for Bluetooth devices and needs location permission to find nearby devices. This is required by Android for BLE scanning."
-        ),
-        PermissionStep(
-            permission = Manifest.permission.ACCESS_COARSE_LOCATION,
-            title = "Coarse Location",
-            description = "Approximate location helps improve device detection",
-            rationale = "Using coarse location improves the accuracy of device detection in your area."
-        ),
-        PermissionStep(
-            permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) 
-                Manifest.permission.BLUETOOTH_SCAN else null,
-            title = "Bluetooth Scan",
-            description = "Required to scan for Bluetooth Low Energy devices",
-            rationale = "Bluetooth scan permission allows the app to discover nearby BLE devices."
-        ),
-        PermissionStep(
-            permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) 
-                Manifest.permission.BLUETOOTH_CONNECT else null,
-            title = "Bluetooth Connect",
-            description = "Needed to communicate with detected devices",
-            rationale = "This permission allows the app to connect to and receive data from Bluetooth devices."
-        ),
-        PermissionStep(
-            permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) 
-                Manifest.permission.POST_NOTIFICATIONS else null,
-            title = "Notifications",
-            description = "Show alerts when devices are detected",
-            rationale = "Get notified when the scanner detects devices, even when the app is in the background."
-        )
-    ).filter { it.permission != null }
-    
+    // Permission handling
     val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            // Move to next permission step
-            if (currentPermissionStep < permissionSteps.size - 1) {
-                currentPermissionStep++
-                // Launch next permission
-                permissionSteps.getOrNull(currentPermissionStep)?.permission?.let {
-                    permissionLauncher.launch(it)
-                }
-            } else {
-                // All permissions granted
-                viewModel.onPermissionsGranted()
-            }
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        val allGranted = results.values.all { it }
+        if (allGranted) {
+            viewModel.onPermissionsGranted()
         } else {
-            // Permission denied, show rationale dialog
             viewModel.onPermissionDenied()
         }
     }
     
-    // Request first permission on first composable entry (only once)
-    var hasRequestedPermissions by remember { mutableStateOf(false) }
-    LaunchedEffect(hasRequestedPermissions) {
-        if (!hasRequestedPermissions && permissionSteps.isNotEmpty()) {
-            hasRequestedPermissions = true
-            permissionSteps[0].permission?.let {
-                permissionLauncher.launch(it)
+    // Request permissions on first composition
+    LaunchedEffect(Unit) {
+        val permissions = buildList {
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                add(Manifest.permission.BLUETOOTH_SCAN)
+                add(Manifest.permission.BLUETOOTH_CONNECT)
             }
         }
+        permissionLauncher.launch(permissions.toTypedArray())
     }
     
-    // Alert dialog for Bluetooth
+    // Alert dialogs
     if (uiState.needsBluetoothEnable) {
         AlertDialog(
             onDismissRequest = { },
             title = { Text("Bluetooth Required") },
-            text = { Text("Please enable Bluetooth to scan for devices.") },
+            text = { Text("Enable Bluetooth to scan for devices.") },
             confirmButton = {
                 TextButton(onClick = {
                     try {
-                        val intent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
-                        context.startActivity(intent)
+                        context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
                     } catch (e: Exception) {
-                        val intent = Intent(Settings.ACTION_SETTINGS)
-                        context.startActivity(intent)
+                        context.startActivity(Intent(Settings.ACTION_SETTINGS))
                     }
                 }) {
                     Text("Open Settings")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { }) { Text("Cancel") }
             }
         )
     }
-    
-    // Alert dialog for permission rationale
-    if (uiState.needsPermissions && permissionSteps.isNotEmpty()) {
-        val currentStep = permissionSteps.getOrNull(currentPermissionStep) ?: permissionSteps[0]
-        AlertDialog(
-            onDismissRequest = { },
-            title = { Text(currentStep.title) },
-            text = { Text(currentStep.description + "\n\n" + currentStep.rationale) },
-            confirmButton = {
-                TextButton(onClick = {
-                    permissionLauncher.launch(currentStep.permission!!)
-                }) {
-                    Text("Grant Permission")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { }) {
-                    Text("Skip")
-                }
-            }
-        )
-    }
-    
-    LazyColumn(
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.background)
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(vertical = 24.dp)
     ) {
-        item {
+        // Animated background
+        AnimatedBackground(colors)
+        
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Header
             HomeHeader(
                 isScanning = uiState.isScanning,
                 scannerStatus = uiState.scannerStatus,
-                onSettingsClick = onSettingsClick
+                onSettingsClick = onSettingsClick,
+                activeTab = activeTab,
+                colors = colors
+            )
+            
+            // Content based on tab
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                when (activeTab) {
+                    "radar" -> RadarTab(
+                        uiState = uiState,
+                        onToggleScanning = { viewModel.toggleScanning() },
+                        onDetectionClick = onDetectionClick,
+                        colors = colors
+                    )
+                    "feed" -> FeedTab(
+                        detections = uiState.recentDetections,
+                        onDetectionClick = onDetectionClick,
+                        colors = colors
+                    )
+                    "heatmap" -> HeatmapTab(colors = colors)
+                    "intel" -> IntelTab(colors = colors)
+                    "gear" -> SettingsTab(onSettingsClick = onSettingsClick, colors = colors)
+                }
+            }
+            
+            // Bottom Navigation
+            BottomNavigationBar(
+                activeTab = activeTab,
+                onTabChange = { activeTab = it },
+                tabs = tabs,
+                tabIcons = tabIcons,
+                colors = colors
             )
         }
-
-        item { RadarCard(isScanning = uiState.isScanning) }
-
-        item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                StatItem(title = "DETECTIONS TODAY", value = uiState.detectionsToday.toString(), modifier = Modifier.weight(1f))
-                StatItem(title = "LAST DETECTION", value = uiState.lastDetection?.let { formatTime(it.lastSeen) } ?: "--:--", modifier = Modifier.weight(1f))
-            }
-        }
-
-        item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                StatItem(title = "COMMUNITY ACTIVITY", value = uiState.communityActivity.toString(), modifier = Modifier.weight(1f))
-                StatItem(title = "SCANNER STATUS", value = if (uiState.isScanning) "ACTIVE" else "IDLE", isActive = uiState.isScanning, modifier = Modifier.weight(1f))
-            }
-        }
-
-        item { ScannerButton(isScanning = uiState.isScanning, onClick = { viewModel.toggleScanning() }) }
-
-        if (uiState.recentDetections.isNotEmpty()) {
-            item { Text("RECENT DETECTIONS", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.textTertiary, modifier = Modifier.padding(top = 16.dp)) }
-            items(uiState.recentDetections.take(5)) { detection ->
-                DetectionItem(detection = detection, onClick = { onDetectionClick(detection.id) })
-            }
-        }
     }
 }
 
 @Composable
-private fun HomeHeader(isScanning: Boolean, scannerStatus: ScannerStatus, onSettingsClick: () -> Unit) {
-    val colors = BlueMeanieTheme.colors
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+private fun AnimatedBackground(colors: BlueMeanieTheme) {
+    val infiniteTransition = rememberInfiniteTransition(label = "bg")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.03f,
+        targetValue = 0.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
+    )
+    
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        // Radial gradient from center
+        drawRect(
+            brush = Brush.radialGradient(
+                colors = listOf(
+                    colors.primary.copy(alpha = pulseAlpha),
+                    Color.Transparent
+                ),
+                center = Offset(size.width / 2, size.height * 0.3f),
+                radius = size.width * 0.8f
+            )
+        )
+    }
+}
+
+@Composable
+private fun HomeHeader(
+    isScanning: Boolean,
+    scannerStatus: ScannerStatus,
+    onSettingsClick: () -> Unit,
+    activeTab: String,
+    colors: BlueMeanieTheme
+) {
+    val headerTitle = when (activeTab) {
+        "radar" -> "RADAR"
+        "feed" -> "FEED"
+        "heatmap" -> "HEATMAP"
+        "intel" -> "INTEL"
+        "gear" -> "SETTINGS"
+        else -> "BLUEMEANIE"
+    }
+    
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Column {
-            Text("BLUEMEANIE", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = colors.primary, letterSpacing = 2.sp)
-            Text("AXON DETECTION SYSTEM", style = MaterialTheme.typography.labelSmall, color = colors.textTertiary, letterSpacing = 1.5.sp)
+            Text(
+                text = "BLUE",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Black,
+                color = colors.primary,
+                letterSpacing = 4.sp
+            )
+            Text(
+                text = headerTitle,
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.textTertiary,
+                letterSpacing = 2.sp
+            )
         }
+        
         Row(verticalAlignment = Alignment.CenterVertically) {
-            StatusBadge(status = scannerStatus.name, isActive = isScanning)
-            Spacer(modifier = Modifier.width(12.dp))
-            IconButton(onClick = onSettingsClick, modifier = Modifier.size(40.dp).clip(CircleShape).background(colors.surface)) {
-                Icon(Icons.Default.Settings, "Settings", tint = colors.textSecondary)
+            // Status indicator
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(if (isScanning) colors.statusActive else colors.textTertiary)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (isScanning) "SCANNING" else "STANDBY",
+                style = MaterialTheme.typography.labelSmall,
+                color = if (isScanning) colors.statusActive else colors.textTertiary,
+                letterSpacing = 1.sp
+            )
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            IconButton(
+                onClick = onSettingsClick,
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(colors.surface)
+            ) {
+                Icon(
+                    Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = colors.textSecondary
+                )
             }
         }
     }
 }
 
 @Composable
-private fun RadarCard(isScanning: Boolean) {
-    val colors = BlueMeanieTheme.colors
-    GlassCard {
-        Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            RadarAnimation(isScanning = isScanning, modifier = Modifier.padding(vertical = 24.dp))
-            AnimatedVisibility(visible = isScanning, enter = fadeIn(), exit = fadeOut()) {
-                Text("SCANNING...", style = MaterialTheme.typography.labelLarge, color = colors.primary, letterSpacing = 2.sp)
+private fun RadarTab(
+    uiState: HomeUiState,
+    onToggleScanning: () -> Unit,
+    onDetectionClick: (String) -> Unit,
+    colors: BlueMeanieTheme
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(bottom = 100.dp)
+    ) {
+        // Large Radar Display
+        item {
+            RadarDisplay(
+                isScanning = uiState.isScanning,
+                detections = uiState.recentDetections.size,
+                colors = colors
+            )
+        }
+        
+        // Quick Stats
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                QuickStat(
+                    label = "TODAY",
+                    value = uiState.detectionsToday.toString(),
+                    icon = Icons.Default.Today,
+                    colors = colors,
+                    modifier = Modifier.weight(1f)
+                )
+                QuickStat(
+                    label = "SIGNAL",
+                    value = if (uiState.lastDetection != null) "${uiState.lastDetection.rssi ?: 0}" else "--",
+                    icon = Icons.Default.SignalCellularAlt,
+                    colors = colors,
+                    modifier = Modifier.weight(1f)
+                )
+                QuickStat(
+                    label = "STATUS",
+                    value = if (uiState.isScanning) "ACTIVE" else "IDLE",
+                    icon = Icons.Default.Radar,
+                    colors = colors,
+                    modifier = Modifier.weight(1f)
+                )
             }
-            if (!isScanning) Text("READY TO SCAN", style = MaterialTheme.typography.labelLarge, color = colors.textTertiary, letterSpacing = 2.sp)
+        }
+        
+        // Scan Button
+        item {
+            ScanButton(
+                isScanning = uiState.isScanning,
+                onClick = onToggleScanning,
+                colors = colors
+            )
+        }
+        
+        // Recent Detections
+        if (uiState.recentDetections.isNotEmpty()) {
+            item {
+                Text(
+                    text = "RECENT CONTACTS",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textTertiary,
+                    letterSpacing = 1.5.sp,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+            
+            items(uiState.recentDetections.take(5)) { detection ->
+                DetectionCard(
+                    detection = detection,
+                    onClick = { onDetectionClick(detection.id) },
+                    colors = colors
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun StatItem(title: String, value: String, isActive: Boolean = false, modifier: Modifier = Modifier) {
-    val colors = BlueMeanieTheme.colors
+private fun RadarDisplay(
+    isScanning: Boolean,
+    detections: Int,
+    colors: BlueMeanieTheme
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "radar")
+    
+    val scanAngle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "scan"
+    )
+    
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.9f,
+        targetValue = 1.1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
+    )
+    
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(24.dp))
+            .background(colors.surface.copy(alpha = 0.5f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp)
+        ) {
+            val center = Offset(size.width / 2, size.height / 2)
+            val radius = size.minDimension / 2 - 8
+            
+            // Outer ring
+            drawCircle(
+                color = colors.primary.copy(alpha = 0.3f),
+                radius = radius,
+                center = center,
+                style = Stroke(width = 2.dp.toPx())
+            )
+            
+            // Middle ring
+            drawCircle(
+                color = colors.primary.copy(alpha = 0.2f),
+                radius = radius * 0.65f,
+                center = center,
+                style = Stroke(width = 1.dp.toPx())
+            )
+            
+            // Inner ring
+            drawCircle(
+                color = colors.primary.copy(alpha = 0.15f),
+                radius = radius * 0.35f,
+                center = center,
+                style = Stroke(width = 1.dp.toPx())
+            )
+            
+            if (isScanning) {
+                // Scan sweep
+                val sweepAngle = Math.toRadians(scanAngle.toDouble())
+                val sweepLength = radius * 0.95f
+                
+                drawLine(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            colors.primary.copy(alpha = 0.8f),
+                            colors.primary.copy(alpha = 0f)
+                        ),
+                        start = center,
+                        end = Offset(
+                            center.x + sweepLength * kotlin.math.cos(sweepAngle).toFloat(),
+                            center.y + sweepLength * kotlin.math.sin(sweepAngle).toFloat()
+                        )
+                    ),
+                    start = center,
+                    end = Offset(
+                        center.x + sweepLength * kotlin.math.cos(sweepAngle).toFloat(),
+                        center.y + sweepLength * kotlin.math.sin(sweepAngle).toFloat()
+                    ),
+                    strokeWidth = 4.dp.toPx()
+                )
+                
+                // Center glow
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            colors.primary.copy(alpha = 0.5f * pulseScale),
+                            colors.primary.copy(alpha = 0f)
+                        ),
+                        center = center,
+                        radius = 20.dp.toPx() * pulseScale
+                    ),
+                    radius = 12.dp.toPx(),
+                    center = center
+                )
+            } else {
+                // Idle center
+                drawCircle(
+                    color = colors.textTertiary.copy(alpha = 0.5f),
+                    radius = 6.dp.toPx(),
+                    center = center
+                )
+            }
+        }
+        
+        // Status text
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = if (isScanning) "SCANNING" else "READY",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (isScanning) colors.statusActive else colors.textSecondary,
+                letterSpacing = 2.sp
+            )
+            Text(
+                text = "$detections contacts",
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.textTertiary
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuickStat(
+    label: String,
+    value: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    colors: BlueMeanieTheme,
+    modifier: Modifier = Modifier
+) {
     GlassCard(modifier = modifier) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-            Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = if (isActive) colors.statusActive else colors.primary)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(title, style = MaterialTheme.typography.labelSmall, color = colors.textTertiary, letterSpacing = 0.5.sp)
-        }
-    }
-}
-
-@Composable
-private fun ScannerButton(isScanning: Boolean, onClick: () -> Unit) {
-    val colors = BlueMeanieTheme.colors
-    Button(onClick = onClick, modifier = Modifier.fillMaxWidth().height(56.dp), shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = if (isScanning) colors.statusDanger else colors.primary)) {
-        Icon(if (isScanning) Icons.Default.Stop else Icons.Default.PlayArrow, null, modifier = Modifier.size(24.dp))
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(if (isScanning) "STOP SCANNING" else "START SCANNING", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-    }
-}
-
-@Composable
-private fun DetectionItem(detection: Detection, onClick: () -> Unit) {
-    val colors = BlueMeanieTheme.colors
-    GlassCard(modifier = Modifier.clickable(onClick = onClick)) {
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(colors.statusDanger.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) { Text("⚡", style = MaterialTheme.typography.titleMedium) }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = colors.primary,
+                modifier = Modifier.size(20.dp)
+            )
             Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text("AXON DEVICE DETECTED", style = MaterialTheme.typography.labelMedium, color = colors.statusDanger, fontWeight = FontWeight.Bold)
-                Text(detection.deviceName ?: "Unknown Device", style = MaterialTheme.typography.bodyMedium, color = colors.textPrimary)
-                Text(formatTime(detection.lastSeen), style = MaterialTheme.typography.labelSmall, color = colors.textTertiary)
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text("${detection.rssi ?: 0} dBm", style = MaterialTheme.typography.labelMedium, color = colors.statusWarning, fontWeight = FontWeight.Bold)
-                Text("${detection.observedSignals ?: 0} signals", style = MaterialTheme.typography.labelSmall, color = colors.textTertiary)
+            Column {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textPrimary
+                )
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.textTertiary,
+                    letterSpacing = 1.sp
+                )
             }
         }
     }
 }
 
-private fun formatTime(timestamp: Long): String = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(timestamp))
+@Composable
+private fun ScanButton(
+    isScanning: Boolean,
+    onClick: () -> Unit,
+    colors: BlueMeanieTheme
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isScanning) colors.statusDanger else colors.primary
+        )
+    ) {
+        Icon(
+            imageVector = if (isScanning) Icons.Default.Stop else Icons.Default.PlayArrow,
+            contentDescription = null,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = if (isScanning) "STOP SCANNING" else "START SCANNING",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp
+        )
+    }
+}
+
+@Composable
+private fun DetectionCard(
+    detection: Detection,
+    onClick: () -> Unit,
+    colors: BlueMeanieTheme
+) {
+    GlassCard(
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Threat indicator
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(colors.statusDanger.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = colors.statusDanger,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = detection.deviceName ?: "UNKNOWN DEVICE",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textPrimary
+                )
+                Text(
+                    text = formatTime(detection.lastSeen),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.textTertiary
+                )
+            }
+            
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "${detection.rssi ?: 0} dBm",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.statusWarning
+                )
+                Text(
+                    text = "${detection.observedSignals ?: 0} pings",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.textTertiary
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FeedTab(
+    detections: List<Detection>,
+    onDetectionClick: (String) -> Unit,
+    colors: BlueMeanieTheme
+) {
+    if (detections.isEmpty()) {
+        EmptyState(
+            icon = Icons.Default.SignalCellularAlt,
+            message = "No contacts detected yet",
+            colors = colors
+        )
+    } else {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(vertical = 16.dp, bottom = 100.dp)
+        ) {
+            item {
+                Text(
+                    text = "${detections.size} CONTACTS",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textTertiary,
+                    letterSpacing = 1.5.sp
+                )
+            }
+            
+            items(detections) { detection ->
+                DetectionCard(
+                    detection = detection,
+                    onClick = { onDetectionClick(detection.id) },
+                    colors = colors
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeatmapTab(colors: BlueMeanieTheme) {
+    EmptyState(
+        icon = Icons.Default.Map,
+        message = "Heatmap coming soon",
+        colors = colors
+    )
+}
+
+@Composable
+private fun IntelTab(colors: BlueMeanieTheme) {
+    EmptyState(
+        icon = Icons.Default.Insights,
+        message = "Intel analysis coming soon",
+        colors = colors
+    )
+}
+
+@Composable
+private fun SettingsTab(onSettingsClick: () -> Unit, colors: BlueMeanieTheme) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 20.dp),
+        contentPadding = PaddingValues(vertical = 16.dp, bottom = 100.dp)
+    ) {
+        item {
+            GlassCard(modifier = Modifier.clickable(onClick = onSettingsClick)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Tune,
+                        contentDescription = null,
+                        tint = colors.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = "Scanner Settings",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = colors.textPrimary
+                        )
+                        Text(
+                            text = "Auto-start, alerts, modes",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = colors.textTertiary
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = colors.textTertiary
+                    )
+                }
+            }
+        }
+        
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            GlassCard {
+                Column {
+                    Text(
+                        text = "Version 2.0.0",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.textSecondary
+                    )
+                    Text(
+                        text = "BlueMeanie APEX",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.textTertiary
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyState(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    message: String,
+    colors: BlueMeanieTheme
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = colors.textTertiary.copy(alpha = 0.5f),
+                modifier = Modifier.size(64.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyLarge,
+                color = colors.textTertiary
+            )
+        }
+    }
+}
+
+@Composable
+private fun BottomNavigationBar(
+    activeTab: String,
+    onTabChange: (String) -> Unit,
+    tabs: List<String>,
+    tabIcons: Map<String, androidx.compose.ui.graphics.vector.ImageVector>,
+    colors: BlueMeanieTheme
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(colors.surface.copy(alpha = 0.95f))
+            .padding(vertical = 8.dp, horizontal = 8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        tabs.forEach { tab ->
+            val isActive = activeTab == tab
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (isActive) colors.primary.copy(alpha = 0.2f) else Color.Transparent)
+                    .clickable { onTabChange(tab) }
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = tabIcons[tab]!!,
+                    contentDescription = tab,
+                    tint = if (isActive) colors.primary else colors.textTertiary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    }
+}
+
+private fun formatTime(timestamp: Long): String = 
+    SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(timestamp))
