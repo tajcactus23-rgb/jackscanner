@@ -4,28 +4,46 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import com.jackscanner.data.preferences.PreferencesManager
 import com.jackscanner.service.BleScanService
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /**
  * Boot receiver - auto-starts scanning after device reboot
  */
+@AndroidEntryPoint
 class BootReceiver : BroadcastReceiver() {
+
+    @Inject
+    lateinit var preferencesManager: PreferencesManager
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            // Get preferences
-            val prefs = context.getSharedPreferences("scanner_prefs", Context.MODE_PRIVATE)
-            val autoStart = prefs.getBoolean("auto_start", false)
+            val pendingResult = goAsync()
             
-            if (autoStart) {
-                val serviceIntent = Intent(context, BleScanService::class.java).apply {
-                    action = BleScanService.ACTION_START_SCANNING
-                }
-                
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(serviceIntent)
-                } else {
-                    context.startService(serviceIntent)
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val scannerSettings = preferencesManager.scannerSettings.first()
+                    if (scannerSettings.autoStartOnBoot) {
+                        val serviceIntent = Intent(context, BleScanService::class.java).apply {
+                            action = BleScanService.ACTION_START_SCANNING
+                        }
+                        
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            context.startForegroundService(serviceIntent)
+                        } else {
+                            context.startService(serviceIntent)
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    pendingResult.finish()
                 }
             }
         }
