@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.jackscanner.ui.screens.home
 
 import android.Manifest
@@ -35,6 +37,7 @@ import com.jackscanner.domain.model.Detection
 import com.jackscanner.domain.model.ScannerStatus
 import com.jackscanner.ui.components.GlassCard
 import com.jackscanner.ui.theme.BlueMeanieTheme
+import com.jackscanner.ui.theme.BlueMeanieColors
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -46,6 +49,7 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val colors = BlueMeanieTheme.colors
+    val context = LocalContext.current
     
     var activeTab by remember { mutableStateOf("radar") }
     val tabs = listOf("radar", "feed", "heatmap", "intel", "gear")
@@ -161,7 +165,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun AnimatedBackground(colors: BlueMeanieTheme) {
+private fun AnimatedBackground(colors: BlueMeanieColors) {
     val infiniteTransition = rememberInfiniteTransition(label = "bg")
     val pulseAlpha by infiniteTransition.animateFloat(
         initialValue = 0.03f,
@@ -194,7 +198,7 @@ private fun HomeHeader(
     scannerStatus: ScannerStatus,
     onSettingsClick: () -> Unit,
     activeTab: String,
-    colors: BlueMeanieTheme
+    colors: BlueMeanieColors
 ) {
     val headerTitle = when (activeTab) {
         "radar" -> "RADAR"
@@ -251,7 +255,7 @@ private fun HomeHeader(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)
-                    .background(colors.surface)
+                    .background(colors.surface, RoundedCornerShape(3.dp))
             ) {
                 Icon(
                     Icons.Default.Settings,
@@ -268,7 +272,7 @@ private fun RadarTab(
     uiState: HomeUiState,
     onToggleScanning: () -> Unit,
     onDetectionClick: (String) -> Unit,
-    colors: BlueMeanieTheme
+    colors: BlueMeanieColors
 ) {
     LazyColumn(
         modifier = Modifier
@@ -353,7 +357,7 @@ private fun RadarTab(
 private fun RadarDisplay(
     isScanning: Boolean,
     detections: Int,
-    colors: BlueMeanieTheme
+    colors: BlueMeanieColors
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "radar")
     
@@ -488,7 +492,7 @@ private fun QuickStat(
     label: String,
     value: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
-    colors: BlueMeanieTheme,
+    colors: BlueMeanieColors,
     modifier: Modifier = Modifier
 ) {
     GlassCard(modifier = modifier) {
@@ -525,7 +529,7 @@ private fun QuickStat(
 private fun ScanButton(
     isScanning: Boolean,
     onClick: () -> Unit,
-    colors: BlueMeanieTheme
+    colors: BlueMeanieColors
 ) {
     Button(
         onClick = onClick,
@@ -556,7 +560,7 @@ private fun ScanButton(
 private fun DetectionCard(
     detection: Detection,
     onClick: () -> Unit,
-    colors: BlueMeanieTheme
+    colors: BlueMeanieColors
 ) {
     GlassCard(
         modifier = Modifier.clickable(onClick = onClick)
@@ -618,7 +622,7 @@ private fun DetectionCard(
 private fun FeedTab(
     detections: List<Detection>,
     onDetectionClick: (String) -> Unit,
-    colors: BlueMeanieTheme
+    colors: BlueMeanieColors
 ) {
     var filter by remember { mutableStateOf("ALL") }
     var sortBy by remember { mutableStateOf("TIME") }
@@ -640,12 +644,12 @@ private fun FeedTab(
                     detection.id.contains(searchQuery)
                 matchesFilter && matchesSearch
             }
-            .sortedByDescending { detection ->
+            .sortedByDescending { detection: Detection ->
                 when (sortBy) {
-                    "TIME" -> detection.lastSeen
-                    "SIGNAL" -> -(detection.rssi ?: 0)
-                    "RECENT" -> detection.firstSeen
-                    else -> detection.lastSeen
+                    "TIME" -> detection.lastSeen.toLong()
+                    "SIGNAL" -> ((detection.rssi ?: -100) * -1).toLong()
+                    "RECENT" -> detection.firstSeen.toLong()
+                    else -> detection.lastSeen.toLong()
                 }
             }
     }
@@ -741,7 +745,7 @@ private fun FeedTab(
             Box {
                 TextButton(
                     onClick = { expanded = true },
-                    colors = ButtonDefaults.textButtonColors(color = colors.textSecondary)
+                    colors = ButtonDefaults.textButtonColors(contentColor = colors.textSecondary)
                 ) {
                     Text(
                         "Sort: $sortBy",
@@ -841,7 +845,7 @@ private fun FeedTab(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(vertical = 8.dp, bottom = 100.dp)
+                contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp)
             ) {
                 items(filteredDetections) { detection ->
                     DetailedDetectionCard(
@@ -859,7 +863,7 @@ private fun FeedTab(
 private fun DetailedDetectionCard(
     detection: Detection,
     onClick: () -> Unit,
-    colors: BlueMeanieTheme
+    colors: BlueMeanieColors
 ) {
     val isAxon = detection.deviceName?.contains("AXON", ignoreCase = true) == true
     val rssi = detection.rssi ?: 0
@@ -965,7 +969,7 @@ private fun DetailedDetectionCard(
                     .fillMaxWidth()
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(colors.surface)
+                    .background(colors.surface, RoundedCornerShape(3.dp))
             ) {
                 Box(
                     modifier = Modifier
@@ -1010,7 +1014,7 @@ private fun formatTimeShort(timestamp: Long): String =
     SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(timestamp))
 
 @Composable
-private fun HeatmapTab(colors: BlueMeanieTheme) {
+private fun HeatmapTab(colors: BlueMeanieColors) {
     var showCommunity by remember { mutableStateOf(false) }
     
     // Mock data for visualization
@@ -1076,7 +1080,7 @@ private fun HeatmapTab(colors: BlueMeanieTheme) {
                 .fillMaxWidth()
                 .weight(1f)
                 .clip(RoundedCornerShape(20.dp))
-                .background(colors.surface)
+                .background(colors.surface, RoundedCornerShape(3.dp))
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val w = size.width
@@ -1220,7 +1224,7 @@ private fun HeatmapTab(colors: BlueMeanieTheme) {
 }
 
 @Composable
-private fun LegendItem(color: Color, label: String, colors: BlueMeanieTheme) {
+private fun LegendItem(color: Color, label: String, colors: BlueMeanieColors) {
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -1247,7 +1251,7 @@ data class HeatmapPoint(
 )
 
 @Composable
-private fun IntelTab(colors: BlueMeanieTheme) {
+private fun IntelTab(colors: BlueMeanieColors) {
     // Mock stats data
     val stats = remember {
         IntelStats(
@@ -1266,7 +1270,7 @@ private fun IntelTab(colors: BlueMeanieTheme) {
             .fillMaxSize()
             .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(vertical = 16.dp, bottom = 100.dp)
+        contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp)
     ) {
         // Header
         item {
@@ -1490,7 +1494,7 @@ private fun IntelCard(
     subtitle: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     color: Color,
-    colors: BlueMeanieTheme
+    colors: BlueMeanieColors
 ) {
     GlassCard(modifier = modifier) {
         Column {
@@ -1528,7 +1532,7 @@ private fun IntelCard(
 private fun IntelRow(
     label: String,
     value: String,
-    colors: BlueMeanieTheme
+    colors: BlueMeanieColors
 ) {
     Row(
         modifier = Modifier
@@ -1556,7 +1560,7 @@ private fun ThreatBar(
     count: Int,
     total: Int,
     color: Color,
-    colors: BlueMeanieTheme
+    colors: BlueMeanieColors
 ) {
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
         Row(
@@ -1581,7 +1585,7 @@ private fun ThreatBar(
                 .fillMaxWidth()
                 .height(6.dp)
                 .clip(RoundedCornerShape(3.dp))
-                .background(colors.surface)
+                .background(colors.surface, RoundedCornerShape(3.dp))
         ) {
             Box(
                 modifier = Modifier
@@ -1599,7 +1603,7 @@ private fun SignalBar(
     label: String,
     percent: Float,
     color: Color,
-    colors: BlueMeanieTheme
+    colors: BlueMeanieColors
 ) {
     Row(
         modifier = Modifier
@@ -1618,7 +1622,7 @@ private fun SignalBar(
                 .weight(1f)
                 .height(8.dp)
                 .clip(RoundedCornerShape(4.dp))
-                .background(colors.surface)
+                .background(colors.surface, RoundedCornerShape(3.dp))
         ) {
             Box(
                 modifier = Modifier
@@ -1650,12 +1654,12 @@ data class IntelStats(
 )
 
 @Composable
-private fun SettingsTab(onSettingsClick: () -> Unit, colors: BlueMeanieTheme) {
+private fun SettingsTab(onSettingsClick: () -> Unit, colors: BlueMeanieColors) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 20.dp),
-        contentPadding = PaddingValues(vertical = 16.dp, bottom = 100.dp)
+        contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp)
     ) {
         item {
             GlassCard(modifier = Modifier.clickable(onClick = onSettingsClick)) {
@@ -1716,7 +1720,7 @@ private fun SettingsTab(onSettingsClick: () -> Unit, colors: BlueMeanieTheme) {
 private fun EmptyState(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     message: String,
-    colors: BlueMeanieTheme
+    colors: BlueMeanieColors
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -1745,7 +1749,7 @@ private fun BottomNavigationBar(
     onTabChange: (String) -> Unit,
     tabs: List<String>,
     tabIcons: Map<String, androidx.compose.ui.graphics.vector.ImageVector>,
-    colors: BlueMeanieTheme
+    colors: BlueMeanieColors
 ) {
     Row(
         modifier = Modifier

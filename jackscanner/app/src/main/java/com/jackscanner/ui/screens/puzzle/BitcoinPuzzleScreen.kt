@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.jackscanner.ui.screens.puzzle
 
 import androidx.compose.foundation.background
@@ -358,7 +360,7 @@ private fun ProgressStatsCard(uiState: PuzzleUiState) {
             
             // Progress Bar
             LinearProgressIndicator(
-                progress = { uiState.progress },
+                progress = uiState.progress,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)
@@ -413,7 +415,7 @@ private fun ResultsCard(uiState: PuzzleUiState) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (uiState.foundKey != null) colors.statusSuccess.copy(alpha = 0.2f)
+            containerColor = if (uiState.foundKey != null) colors.statusActive.copy(alpha = 0.2f)
             else colors.surface
         )
     ) {
@@ -430,14 +432,14 @@ private fun ResultsCard(uiState: PuzzleUiState) {
                     Icon(
                         Icons.Default.CheckCircle,
                         contentDescription = null,
-                        tint = colors.statusSuccess
+                        tint = colors.statusActive
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "KEY FOUND!",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = colors.statusSuccess
+                        color = colors.statusActive
                     )
                 }
                 
@@ -516,7 +518,7 @@ private fun VisualizationCard(uiState: PuzzleUiState) {
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier.heightIn(max = 300.dp)
                 ) {
-                    items(uiState.recentChecks.take(50)) { check ->
+                    uiState.recentChecks.take(50).forEach { check ->
                         CheckResultRow(check)
                     }
                 }
@@ -531,7 +533,7 @@ private fun CheckResultRow(check: CheckResult) {
     val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
     
     val (bgColor, icon, textColor) = when (check.result) {
-        CheckOutcome.FOUND_ACTIVE -> Triple(colors.statusSuccess.copy(alpha = 0.3f), Icons.Default.EmojiEvents, colors.statusSuccess)
+        CheckOutcome.FOUND_ACTIVE -> Triple(colors.statusActive.copy(alpha = 0.3f), Icons.Default.EmojiEvents, colors.statusActive)
         CheckOutcome.HAS_BALANCE -> Triple(colors.statusWarning.copy(alpha = 0.3f), Icons.Default.AttachMoney, colors.statusWarning)
         CheckOutcome.EMPTY -> Triple(colors.background, Icons.Default.RemoveCircleOutline, colors.textTertiary)
         CheckOutcome.ERROR -> Triple(colors.statusDanger.copy(alpha = 0.2f), Icons.Default.Error, colors.statusDanger)
