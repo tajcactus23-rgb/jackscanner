@@ -159,7 +159,7 @@ class BitcoinPuzzleViewModel @Inject constructor() : ViewModel() {
                     SearchMethod.RANDOM -> {
                         val range = end - start
                         if (range > BigInteger.ZERO && range < BigInteger(Long.MAX_VALUE.toString())) {
-                            start + BigInteger(Random.nextLong(range.toLong()))
+                            start + BigInteger.valueOf(Random.nextLong(range.toLong()))
                         } else start
                     }
                     SearchMethod.FIBONACCI -> {
@@ -170,7 +170,7 @@ class BitcoinPuzzleViewModel @Inject constructor() : ViewModel() {
                         } else start
                     }
                     SearchMethod.BINARY_SEARCH -> {
-                        if (count % 2 == 0L) (start + end) / 2 else start
+                        if (count % 2 == 0L) (start + end) / BigInteger.valueOf(2) else start
                     }
                 }
                 

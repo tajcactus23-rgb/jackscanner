@@ -519,7 +519,7 @@ private fun VisualizationCard(uiState: PuzzleUiState) {
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier.heightIn(max = 300.dp)
                 ) {
-                    uiState.recentChecks.take(50).forEach { check ->
+                    items(uiState.recentChecks.take(50)) { check ->
                         CheckResultRow(check)
                     }
                 }
