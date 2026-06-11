@@ -96,19 +96,13 @@ class HomeViewModel @Inject constructor(
     }
     
     fun toggleScanning() {
-        try {
-            if (BleScanService.isRunning) {
-                scanController.stopScanning()
-            } else {
-                scanController.startScanning()
-            }
-        } catch (e: Exception) {
-            // Log error - service might not be available
-            e.printStackTrace()
-        }
-        
+        // If already running, stop it
         if (BleScanService.isRunning) {
-            scanController.stopScanning()
+            try {
+                scanController.stopScanning()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
             return
         }
         
@@ -146,7 +140,11 @@ class HomeViewModel @Inject constructor(
         }
         
         // All checks passed - start scanning
-        scanController.startScanning(checkBluetooth = false)
+        try {
+            scanController.startScanning()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
     
     fun onBluetoothEnabled() {
