@@ -33,6 +33,14 @@ class BleScanService : Service() {
     companion object {
         const val ACTION_START_SCANNING = "com.jackscanner.START_SCANNING"
         const val ACTION_STOP_SCANNING = "com.jackscanner.STOP_SCANNING"
+        const val ACTION_DEVICE_DETECTED = "com.jackscanner.DEVICE_DETECTED"
+        const val ACTION_SCAN_STARTED = "com.jackscanner.SCAN_STARTED"
+        const val ACTION_SCAN_STOPPED = "com.jackscanner.SCAN_STOPPED"
+        
+        const val EXTRA_MAC = "extra_mac"
+        const val EXTRA_NAME = "extra_name"
+        const val EXTRA_TYPE = "extra_type"
+        const val EXTRA_RSSI = "extra_rssi"
         
         const val NOTIFICATION_CHANNEL_ID = "jackscanner_channel"
         const val NOTIFICATION_ID = 1
@@ -79,6 +87,9 @@ class BleScanService : Service() {
         isScanning = true
         isRunning = true
         
+        // Broadcast scan started
+        sendBroadcast(Intent(ACTION_SCAN_STARTED))
+        
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as android.bluetooth.BluetoothManager
         val bluetoothAdapter = bluetoothManager.adapter
         
@@ -113,6 +124,15 @@ class BleScanService : Service() {
                     
                     android.util.Log.i("BleScanService", "Target detected: $address ($displayName) RSSI: $signalStrength")
                     
+                    // Broadcast device detected for radar
+                    Intent(ACTION_DEVICE_DETECTED).apply {
+                        putExtra(EXTRA_MAC, address)
+                        putExtra(EXTRA_NAME, displayName)
+                        putExtra(EXTRA_TYPE, "AXON")
+                        putExtra(EXTRA_RSSI, signalStrength)
+                        sendBroadcast(this)
+                    }
+                    
                     // Alert!
                     sendAlertNotification(address, displayName, signalStrength)
                     triggerAlert()
@@ -141,6 +161,9 @@ class BleScanService : Service() {
         isScanning = false
         // Keep detectedCount until manually cleared
         isRunning = false
+        
+        // Broadcast scan stopped
+        sendBroadcast(Intent(ACTION_SCAN_STOPPED))
         
         try {
             scanCallback?.let {

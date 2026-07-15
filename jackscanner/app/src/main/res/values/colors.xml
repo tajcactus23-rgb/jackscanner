@@ -25,6 +25,8 @@
     <color name="status_gold">#FFD700</color>
     <color name="status_silver">#C0C0C0</color>
     <color name="status_bronze">#CD7F32</color>
+    <color name="status_idle">#66FFFFFF</color>
+    <color name="status_active">#30D158</color>
     
     <!-- Borders -->
     <color name="border_dim">#2600E5FF</color>

@@ -75,48 +75,12 @@
                 android:gravity="center"
                 android:padding="32dp">
 
-                <!-- Radar Visual -->
-                <FrameLayout
-                    android:layout_width="200dp"
-                    android:layout_height="200dp"
-                    android:layout_marginBottom="24dp">
-
-                    <View
-                        android:id="@+id/radarOuter"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/radar_ring" />
-
-                    <View
-                        android:id="@+id/radarMiddle"
-                        android:layout_width="140dp"
-                        android:layout_height="140dp"
-                        android:layout_gravity="center"
-                        android:background="@drawable/radar_ring_middle" />
-
-                    <View
-                        android:id="@+id/radarInner"
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        android:layout_gravity="center"
-                        android:background="@drawable/radar_ring_inner" />
-
-                    <View
-                        android:id="@+id/radarScanLine"
-                        android:layout_width="100dp"
-                        android:layout_height="3dp"
-                        android:layout_gravity="center_vertical"
-                        android:background="@drawable/radar_line"
-                        android:alpha="0.8" />
-
-                    <View
-                        android:id="@+id/radarDot"
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
-                        android:layout_gravity="center"
-                        android:background="@drawable/radar_dot" />
-
-                </FrameLayout>
+                <!-- Asteroids-style Radar Visual -->
+                <com.jackscanner.ui.AsteroidsRadarView
+                    android:id="@+id/asteroidsRadar"
+                    android:layout_width="220dp"
+                    android:layout_height="220dp"
+                    android:layout_marginBottom="24dp" />
 
                 <!-- Target Status -->
                 <TextView

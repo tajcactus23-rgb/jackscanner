@@ -3,7 +3,10 @@ package com.jackscanner.ui
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -20,6 +23,26 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private var isScanning = false
+    
+    // Radar detection receiver
+    private val radarReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                BleScanService.ACTION_DEVICE_DETECTED -> {
+                    val mac = intent.getStringExtra(BleScanService.EXTRA_MAC) ?: return
+                    val name = intent.getStringExtra(BleScanService.EXTRA_NAME) ?: "UNKNOWN"
+                    val type = intent.getStringExtra(BleScanService.EXTRA_TYPE) ?: "DEVICE"
+                    binding.asteroidsRadar.addDetection(mac, name, type)
+                }
+                BleScanService.ACTION_SCAN_STARTED -> {
+                    binding.asteroidsRadar.startScanning()
+                }
+                BleScanService.ACTION_SCAN_STOPPED -> {
+                    binding.asteroidsRadar.stopScanning()
+                }
+            }
+        }
+    }
 
     private val requiredPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         arrayOf(
@@ -70,7 +93,34 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        registerReceiver()
         checkBluetoothState()
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver()
+    }
+    
+    private fun registerReceiver() {
+        val filter = IntentFilter().apply {
+            addAction(BleScanService.ACTION_DEVICE_DETECTED)
+            addAction(BleScanService.ACTION_SCAN_STARTED)
+            addAction(BleScanService.ACTION_SCAN_STOPPED)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(radarReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(radarReceiver, filter)
+        }
+    }
+    
+    private fun unregisterReceiver() {
+        try {
+            unregisterReceiver(radarReceiver)
+        } catch (e: IllegalArgumentException) {
+            // Receiver not registered
+        }
     }
 
     private fun setupUI() {
@@ -143,19 +193,20 @@ class MainActivity : AppCompatActivity() {
                 btnScan.text = getString(R.string.stop_scan)
                 statusText.text = getString(R.string.scanning_status)
                 statusText.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.status_active))
+                statusBadge.text = "● SCANNING"
+                statusBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.status_active))
+                targetStatus.text = getString(R.string.scanning_status)
                 deviceCount.text = getString(R.string.devices_found, BleScanService.detectedCount)
             } else {
                 btnScan.text = getString(R.string.start_scan)
                 statusText.text = getString(R.string.ready_status)
                 statusText.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.status_idle))
+                statusBadge.text = "● IDLE"
+                statusBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.status_danger))
+                targetStatus.text = "IDLE"
                 deviceCount.text = getString(R.string.devices_found, 0)
             }
         }
-    }
-    
-    override fun onPause() {
-        super.onPause()
-        // Keep scanning running in background
     }
     
     override fun onDestroy() {
