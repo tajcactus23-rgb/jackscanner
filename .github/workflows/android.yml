@@ -2,23 +2,23 @@ name: Build Android APK
 
 on:
   push:
-    branches: [master]
+    branches: [master, test, feature/*]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-        
+
     - name: Install Gradle
       run: |
         cd $HOME
@@ -26,10 +26,10 @@ jobs:
         unzip -q gradle.zip
         export PATH=$HOME/gradle-8.2/bin:$PATH
         gradle --version
-        
+
     - name: Setup Android SDK
       uses: android-actions/setup-android@v2
-        
+
     - name: Build JackScanner APK
       run: |
         export PATH=$HOME/gradle-8.2/bin:$PATH
@@ -37,41 +37,9 @@ jobs:
         echo "sdk.dir=$ANDROID_HOME" > jackscanner/local.properties
         cd jackscanner
         gradle assembleDebug --no-daemon
-        
-    - name: Build AxonBleeder APK
-      run: |
-        export PATH=$HOME/gradle-8.2/bin:$PATH
-        export ANDROID_HOME=$HOME/android-sdk
-        echo "sdk.dir=$ANDROID_HOME" > axonbleeder/local.properties
-        cd axonbleeder
-        gradle assembleDebug --no-daemon
-        
-    - name: Upload APKs
+
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: android-apks
-        path: |
-          jackscanner/app/build/outputs/apk/debug/*.apk
-          axonbleeder/app/build/outputs/apk/debug/*.apk
-        
-    - name: Wait for rate limit
-      run: sleep 30
-        
-    - name: Create Release
-      run: |
-        # Create release using gh CLI
-        gh release create "v1.0.0" \
-          jackscanner/app/build/outputs/apk/debug/*.apk \
-          axonbleeder/app/build/outputs/apk/debug/*.apk \
-          --title "BlueMeanie Scanner v1.0" \
-          --notes "## BlueMeanie BLE Scanner
-
-### APKs
-- jackscanner-debug.apk
-- app-debug.axonbleeder
-
-### Detection
-- MAC OUI: 00:25:DF, FC:A9:E8, X4G
-- Names: AXON_CAMERA, TASER" \
-          --draft \
-          --repo tajcactus23-rgb/jackscanner || echo "Release may already exist"
+        name: jackscanner-apk
+        path: jackscanner/app/build/outputs/apk/debug/*.apk
