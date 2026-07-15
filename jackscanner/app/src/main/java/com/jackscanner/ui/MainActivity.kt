@@ -124,18 +124,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
-        binding.btnScan.setOnClickListener {
+        binding.scanButton.setOnClickListener {
             if (isScanning) {
                 stopScanning()
             } else {
                 checkBluetoothState()
             }
-        }
-
-        binding.btnSettings.setOnClickListener {
-            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = android.net.Uri.fromParts("package", packageName, null)
-            })
         }
         
         // Check if service is running
@@ -190,21 +184,17 @@ class MainActivity : AppCompatActivity() {
     private fun updateUI() {
         binding.apply {
             if (isScanning || BleScanService.isRunning) {
-                btnScan.text = getString(R.string.stop_scan)
-                statusText.text = getString(R.string.scanning_status)
-                statusText.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.status_active))
+                scanButton.text = getString(R.string.stop_scan)
                 statusBadge.text = "● SCANNING"
                 statusBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.status_active))
                 targetStatus.text = getString(R.string.scanning_status)
-                deviceCount.text = getString(R.string.devices_found, BleScanService.detectedCount)
+                deviceCount.text = BleScanService.detectedCount.toString()
             } else {
-                btnScan.text = getString(R.string.start_scan)
-                statusText.text = getString(R.string.ready_status)
-                statusText.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.status_idle))
+                scanButton.text = getString(R.string.start_scan)
                 statusBadge.text = "● IDLE"
                 statusBadge.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.status_danger))
                 targetStatus.text = "IDLE"
-                deviceCount.text = getString(R.string.devices_found, 0)
+                deviceCount.text = "0"
             }
         }
     }
